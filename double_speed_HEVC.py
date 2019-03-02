@@ -59,7 +59,7 @@ def main():
       v1 = v1.filter('scale', -1, MAX_HEIGHT, force_original_aspect_ratio='decrease')
     a1 = inputObject['a'].filter('atempo', 2.0)
 
-    ffmpeg.output(v1, a1, new_name, format='mp4', pix_fmt='yuv420p', vcodec='libx265', preset='slow', crf=get_crf(new_height), acodec='aac', r=(2.0*get_frame_rate(in_file_name))).run(overwrite_output=True)
+    ffmpeg.output(v1, a1, new_name, format='mp4', pix_fmt='yuv420p', vcodec='libx265', preset='slow', crf=get_crf(min(MAX_HEIGHT, new_height), acodec='aac', r=(2.0*get_frame_rate(in_file_name))).run(overwrite_output=True)
 
 if __name__== "__main__":
   main()
