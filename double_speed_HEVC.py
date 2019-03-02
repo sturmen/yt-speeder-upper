@@ -7,19 +7,22 @@ import youtube_dl
 
 MAX_HEIGHT = 1440
 MAX_WIDTH = 2960
-FILE_NAME_TEMPLATE = "%(uploader)s - %(title)s - %(id)s"
+FILE_NAME_TEMPLATE = "%(uploader)s_%(title)s_%(id)s"
 
 def get_height(filename):
-  probe = ffmpeg.probe(filename)
-  video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
-  height = int(video_stream['height'])
-  return height
+  try:
+    probe = ffmpeg.probe(filename)
+    video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
+    height = int(video_stream['height'])
+    return height
+  except ffmpeg.Error as e:
+    print(e.stderr)
+    raise e
 
 def get_frame_rate(filename):
   probe = ffmpeg.probe(filename)
   video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
   fps = eval(video_stream['r_frame_rate'])
-  print(fps)
   return float(fps)
 
 def get_crf(height):
@@ -30,24 +33,20 @@ def get_crf(height):
   else:
     return 28
 
-def add_file_name(extracted_info):
-  constructed_file_name = FILE_NAME_TEMPLATE % {"uploader": extracted_info["uploader"], "title": extracted_info["title"], "id": extracted_info["id"]}
-  constructed_file_name += ".mkv"
-  print(constructed_file_name)
-  return constructed_file_name
-
 def main():
   downloaded_videos = []
   ydl_opts = {
     'format': 'bestvideo+bestaudio/best',
     'outtmpl': FILE_NAME_TEMPLATE,
+    'restrictfilenames': True,
     'merge_output_format': 'mkv'
   }
 
   with youtube_dl.YoutubeDL(ydl_opts) as ydl:
     for url in sys.argv[1:]:
       extracted_info = ydl.extract_info(url)
-      downloaded_videos.append(add_file_name(extracted_info))
+      new_file_name = ydl.prepare_filename(extracted_info) + ".mkv"
+      downloaded_videos.append(new_file_name)
 
   for in_file_name in downloaded_videos:
     new_name = os.path.splitext(in_file_name)[0] + " [2XHEVC].mp4"
