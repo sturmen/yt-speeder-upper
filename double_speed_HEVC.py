@@ -46,8 +46,11 @@ def main():
   with youtube_dl.YoutubeDL(ydl_opts) as ydl:
     for url in sys.argv[1:]:
       extracted_info = ydl.extract_info(url)
-      new_file_name = ydl.prepare_filename(extracted_info) + ".mkv"
-      downloaded_videos.append(new_file_name)
+      if "_type" in extracted_info and "entries" in extracted_info and extracted_info["_type"] is 'playlist':
+        for entry in extracted_info["entries"]:
+          downloaded_videos.append(ydl.prepare_filename(entry) + ".mkv")
+      else: 
+        downloaded_videos.append(ydl.prepare_filename(extracted_info) + ".mkv")
 
   for in_file_name in downloaded_videos:
     new_name = os.path.splitext(in_file_name)[0] + " [2XHEVC].mp4"
