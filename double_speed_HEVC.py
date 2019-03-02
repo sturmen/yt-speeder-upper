@@ -10,10 +10,7 @@ MAX_WIDTH = 2960
 def get_height(filename):
   probe = ffmpeg.probe(filename)
   video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
-  # width = int(video_stream['width'])
   height = int(video_stream['height'])
-  # width = min(width, MAX_WIDTH)
-  height = min(height, MAX_HEIGHT)
   return height
 
 def get_frame_rate(filename):
@@ -26,9 +23,10 @@ def get_frame_rate(filename):
 def get_crf(height):
   if (height >= 1440):
     return 23
-  if (height >= 1080):
+  elif (height >= 1080):
     return 25
-  return 28
+  else:
+    return 28
 
 def main():
   in_file_name = sys.argv[1]
@@ -36,10 +34,12 @@ def main():
   new_height = get_height(in_file_name)
 
   inputObject = ffmpeg.input(in_file_name)
-  v1 = inputObject['v'].setpts("0.5*PTS").filter('scale', -1, new_height, force_original_aspect_ratio='decrease')
+  v1 = inputObject['v'].setpts("0.5*PTS")
+  if (new_height > MAX_HEIGHT):
+    v1 = v1.filter('scale', -1, MAX_HEIGHT, force_original_aspect_ratio='decrease')
   a1 = inputObject['a'].filter('atempo', 2.0)
 
-  ffmpeg.output(v1, a1, inputObject['s'], new_name, format='mp4', pix_fmt='yuv420p', scodec='mov_text', vcodec='libx265', preset='slow', crf=get_crf(new_height), acodec='aac', r=(2.0*get_frame_rate(in_file_name))).run(overwrite_output=True)
+  ffmpeg.output(v1, a1, new_name, format='mp4', pix_fmt='yuv420p', vcodec='libx265', preset='slow', crf=get_crf(new_height), acodec='aac', r=(2.0*get_frame_rate(in_file_name))).run(overwrite_output=True)
 
 if __name__== "__main__":
   main()
