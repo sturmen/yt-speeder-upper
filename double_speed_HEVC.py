@@ -7,6 +7,7 @@ import youtube_dl
 
 MAX_HEIGHT = 1440
 MAX_WIDTH = 2960
+MAX_FRAME_RATE = 30
 FILE_NAME_TEMPLATE = "%(uploader)s_%(title)s_%(id)s"
 
 def get_height(filename):
@@ -36,7 +37,7 @@ def get_crf(height):
 def main():
   downloaded_videos = []
   ydl_opts = {
-    'format': 'bestvideo+bestaudio/best',
+    'format': 'bestvideo[fps<=%(fps)s]+bestaudio/best' % {"fps": MAX_FRAME_RATE},
     'outtmpl': FILE_NAME_TEMPLATE,
     'restrictfilenames': True,
     'merge_output_format': 'mkv'
