@@ -1,3 +1,5 @@
+#! python3
+
 import ffmpeg
 import sys
 import os
