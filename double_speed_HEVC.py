@@ -25,10 +25,10 @@ def get_frame_rate(filename):
 
 def get_crf(height):
   if (height >= 1440):
-    return 25
+    return 23
   if (height >= 1080):
-    return 28
-  return 30
+    return 25
+  return 28
 
 def main():
   in_file_name = sys.argv[1]
