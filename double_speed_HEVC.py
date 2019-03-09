@@ -58,9 +58,13 @@ def main():
             downloaded_videos.append(filename)
       except:
         print(f'failed to download {url}')
-        
+
   for in_file_name in downloaded_videos:
     file_name_root = os.path.splitext(in_file_name)[0]
+    destination_file = file_name_root  + " [2XHEVC].mp4"
+    if os.path.isfile(destination_file):
+      continue
+
     new_height = get_height(in_file_name)
 
     inputObject = ffmpeg.input(in_file_name)
@@ -69,7 +73,10 @@ def main():
       v1 = v1.filter('scale', -1, MAX_HEIGHT, force_original_aspect_ratio='decrease')
     a1 = inputObject['a'].filter('atempo', 2.0)
 
-    ffmpeg.output(v1, a1, file_name_root  + " [2XHEVC].mp4", format='mp4', pix_fmt='yuv420p', vcodec='libx265', preset='slow', crf=get_crf(min(MAX_HEIGHT,new_height)), acodec='aac', vtag="hvc1", r=(2.0*get_frame_rate(in_file_name))).run(overwrite_output=True)
+    temp_file_name = file_name_root + ".tmp"
+
+    ffmpeg.output(v1, a1, temp_file_name, format='mp4', pix_fmt='yuv420p', vcodec='libx265', preset='slow', crf=get_crf(min(MAX_HEIGHT,new_height)), acodec='aac', vtag="hvc1", r=(2.0*get_frame_rate(in_file_name))).run(overwrite_output=True)
+    os.rename(temp_file_name, destination_file)
 
 if __name__== "__main__":
   main()
