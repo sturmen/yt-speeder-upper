@@ -45,15 +45,22 @@ def main():
 
   with youtube_dl.YoutubeDL(ydl_opts) as ydl:
     for url in sys.argv[1:]:
-      extracted_info = ydl.extract_info(url)
-      if "_type" in extracted_info and "entries" in extracted_info and extracted_info["_type"] is 'playlist':
-        for entry in extracted_info["entries"]:
-          downloaded_videos.append(ydl.prepare_filename(entry) + ".mkv")
-      else: 
-        downloaded_videos.append(ydl.prepare_filename(extracted_info) + ".mkv")
-
+      try:
+        extracted_info = ydl.extract_info(url)
+        if "_type" in extracted_info and "entries" in extracted_info and extracted_info["_type"] is 'playlist':
+          for entry in extracted_info["entries"]:
+            filename = ydl.prepare_filename(entry) + ".mkv"
+            if filename not in downloaded_videos:
+              downloaded_videos.append(filename)
+        else:
+          filename = ydl.prepare_filename(extracted_info) + ".mkv"
+          if filename not in downloaded_videos:
+            downloaded_videos.append(filename)
+      except:
+        print(f'failed to download {url}')
+        
   for in_file_name in downloaded_videos:
-    new_name = os.path.splitext(in_file_name)[0] + " [2XHEVC].mp4"
+    file_name_root = os.path.splitext(in_file_name)[0]
     new_height = get_height(in_file_name)
 
     inputObject = ffmpeg.input(in_file_name)
@@ -62,7 +69,7 @@ def main():
       v1 = v1.filter('scale', -1, MAX_HEIGHT, force_original_aspect_ratio='decrease')
     a1 = inputObject['a'].filter('atempo', 2.0)
 
-    ffmpeg.output(v1, a1, new_name, format='mp4', pix_fmt='yuv420p', vcodec='libx265', preset='slow', crf=get_crf(min(MAX_HEIGHT,new_height)), acodec='aac', vtag="hvc1", r=(2.0*get_frame_rate(in_file_name))).run(overwrite_output=True)
+    ffmpeg.output(v1, a1, file_name_root  + " [2XHEVC].mp4", format='mp4', pix_fmt='yuv420p', vcodec='libx265', preset='slow', crf=get_crf(min(MAX_HEIGHT,new_height)), acodec='aac', vtag="hvc1", r=(2.0*get_frame_rate(in_file_name))).run(overwrite_output=True)
 
 if __name__== "__main__":
   main()
