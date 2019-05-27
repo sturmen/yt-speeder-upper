@@ -91,7 +91,7 @@ def main():
 
     temp_file_name = file_name_root + ".tmp"
 
-    output_stream = ffmpeg.output(phone_video, a1, temp_file_name, format='mp4', pix_fmt='yuv420p', vcodec='hevc_nvenc', preset='slow', video_bitrate=4000, audio_bitrate=128, acodec='aac', vtag="hvc1", r=(2.0*get_frame_rate(in_file_name)))
+    output_stream = ffmpeg.output(phone_video, a1, temp_file_name, format='mp4', pix_fmt='yuv420p', vcodec='hevc_nvenc', preset='slow', video_bitrate="8M", audio_bitrate="128k", acodec='aac', vtag="hvc1", r=(2.0*get_frame_rate(in_file_name)))
     output_stream.run(overwrite_output=True)
     os.rename(temp_file_name, destination_file)
     # output_stream_tablet = ffmpeg.output(tablet_video, a1,  destination_file_tablet, format='mp4', pix_fmt='yuv420p', vcodec='libx265', preset='slow', crf=25, acodec='aac', vtag="hvc1", r=(2.0*get_frame_rate(in_file_name)))
