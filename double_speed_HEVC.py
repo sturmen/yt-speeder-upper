@@ -70,7 +70,7 @@ def main():
     inputObject = ffmpeg.input(in_file_name)
     v1 = inputObject['v'].setpts("0.5*PTS")
     if (new_height > MAX_HEIGHT):
-      v1 = v1.filter('scale', -1, MAX_HEIGHT, force_original_aspect_ratio='decrease')
+      v1 = v1.filter('scale', -2, MAX_HEIGHT)
     a1 = inputObject['a'].filter('atempo', 2.0)
 
     temp_file_name = file_name_root + ".tmp"
