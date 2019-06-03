@@ -49,7 +49,7 @@ def get_crf(height):
 def main():
   downloaded_videos = []
   ydl_opts = {
-    'format': 'bestvideo[fps<=%(fps)s]+bestaudio/best' % {"fps": MAX_FRAME_RATE},
+    'format': 'bestvideo[fps<=%(fps)s][ext=webm]+bestaudio/best[ext=webm]' % {"fps": MAX_FRAME_RATE},
     'outtmpl': FILE_NAME_TEMPLATE,
     'restrictfilenames': True,
     'merge_output_format': 'mkv'
@@ -74,7 +74,6 @@ def main():
   for in_file_name in downloaded_videos:
     file_name_root = os.path.splitext(in_file_name)[0]
     destination_file = file_name_root  + " [2XHEVC].mp4"
-    destination_file_tablet = file_name_root  + " [TABLET][2XHEVC].mp4"
     if os.path.isfile(destination_file):
       continue
 
@@ -82,7 +81,7 @@ def main():
 
     inputObject = ffmpeg.input(in_file_name)
     v1 = inputObject['v'].setpts("0.5*PTS")
-    phone_video = tablet_video = v1
+    phone_video = v1
     if (new_height > MAX_HEIGHT):
       phone_video = v1.filter('scale', -2, MAX_HEIGHT)
     a1 = inputObject['a'].filter('atempo', 2.0)
