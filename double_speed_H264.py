@@ -8,8 +8,6 @@ import youtube_dl
 MAX_HEIGHT = 1440
 MAX_WIDTH = 2960
 MAX_FRAME_RATE = 30
-TABLET_WIDTH = 1280
-TABLET_HEIGHT = 720
 FILE_NAME_TEMPLATE = "%(uploader)s_%(title)s_%(id)s"
 
 def get_height(filename):
@@ -22,16 +20,6 @@ def get_height(filename):
     print(e.stderr)
     raise e
 
-def get_width(filename):
-  try:
-    probe = ffmpeg.probe(filename)
-    video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
-    width = int(video_stream['width'])
-    return width
-  except ffmpeg.Error as e:
-    print(e.stderr)
-    raise e
-
 def get_frame_rate(filename):
   probe = ffmpeg.probe(filename)
   video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
@@ -40,11 +28,11 @@ def get_frame_rate(filename):
 
 def get_crf(height):
   if (height > 1080):
-    return 23
+    return 17
   elif (height > 720):
-    return 25
+    return 20
   else:
-    return 28
+    return 23
 
 def main():
   downloaded_videos = []
@@ -73,8 +61,7 @@ def main():
 
   for in_file_name in downloaded_videos:
     file_name_root = os.path.splitext(in_file_name)[0]
-    destination_file = file_name_root  + " [2XHEVC].mp4"
-    destination_file_tablet = file_name_root  + " [TABLET][2XHEVC].mp4"
+    destination_file = file_name_root  + " [2X].mp4"
     if os.path.isfile(destination_file):
       continue
 
@@ -82,15 +69,13 @@ def main():
 
     inputObject = ffmpeg.input(in_file_name)
     v1 = inputObject['v'].setpts("0.5*PTS")
-    phone_video = tablet_video = v1
     if (new_height > MAX_HEIGHT):
-      phone_video = v1.filter('scale', -2, MAX_HEIGHT)
+      v1 = v1.filter('scale', -2, MAX_HEIGHT)
     a1 = inputObject['a'].filter('atempo', 2.0)
 
     temp_file_name = file_name_root + ".tmp"
 
-    output_stream = ffmpeg.output(phone_video, a1, temp_file_name, format='mp4', pix_fmt='yuv420p', vcodec='hevc_nvenc', preset='slow', video_bitrate="8M", audio_bitrate="128k", acodec='aac', vtag="hvc1", r=(2.0*get_frame_rate(in_file_name)))
-    output_stream.run(overwrite_output=True)
+    ffmpeg.output(v1, a1, temp_file_name, format='mp4', pix_fmt='yuv420p', vcodec='libx264', preset='ultrafast', tune='film', crf=get_crf(min(MAX_HEIGHT,new_height)), acodec='aac', r=(2.0*get_frame_rate(in_file_name))).run(overwrite_output=True)
     os.rename(temp_file_name, destination_file)
 
 if __name__== "__main__":
