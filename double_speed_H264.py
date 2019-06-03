@@ -28,11 +28,11 @@ def get_frame_rate(filename):
 
 def get_crf(height):
   if (height > 1080):
-    return 21
+    return 17
   elif (height > 720):
-    return 23
+    return 20
   else:
-    return 25
+    return 23
 
 def main():
   downloaded_videos = []
@@ -75,7 +75,7 @@ def main():
 
     temp_file_name = file_name_root + ".tmp"
 
-    ffmpeg.output(v1, a1, temp_file_name, format='mp4', pix_fmt='yuv420p', vcodec='libx264', preset='slow', crf=get_crf(min(MAX_HEIGHT,new_height)), acodec='aac', r=(2.0*get_frame_rate(in_file_name))).run(overwrite_output=True)
+    ffmpeg.output(v1, a1, temp_file_name, format='mp4', pix_fmt='yuv420p', vcodec='libx264', preset='ultrafast', tune='film', crf=get_crf(min(MAX_HEIGHT,new_height)), acodec='aac', r=(2.0*get_frame_rate(in_file_name))).run(overwrite_output=True)
     os.rename(temp_file_name, destination_file)
 
 if __name__== "__main__":
