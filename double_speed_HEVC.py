@@ -61,7 +61,7 @@ def main():
 
   for in_file_name in downloaded_videos:
     file_name_root = os.path.splitext(in_file_name)[0]
-    destination_file = file_name_root  + " [2XHEVC].mp4"
+    destination_file = file_name_root  + "_[2XHEVC].mp4"
     if os.path.isfile(destination_file):
       continue
 
@@ -75,7 +75,7 @@ def main():
 
     temp_file_name = file_name_root + ".tmp"
 
-    ffmpeg.output(v1, a1, temp_file_name, format='mp4', pix_fmt='yuv420p', vcodec='libx265', preset='slow', crf=get_crf(min(MAX_HEIGHT,new_height)), acodec='aac', vtag="hvc1", r=(2.0*get_frame_rate(in_file_name))).run(overwrite_output=True)
+    ffmpeg.output(v1, a1, temp_file_name, format='mp4', pix_fmt='yuv420p', vcodec='libx265', preset='ultrafast', crf=get_crf(min(MAX_HEIGHT,new_height)), tune="fastdecode", vtag="hvc1", acodec='aac', r=(2.0*get_frame_rate(in_file_name))).run(overwrite_output=True)
     os.rename(temp_file_name, destination_file)
 
 if __name__== "__main__":
