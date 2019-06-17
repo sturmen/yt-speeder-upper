@@ -25,15 +25,7 @@ def get_frame_rate(filename):
   video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
   fps = eval(video_stream['r_frame_rate'])
   return float(fps)
-
-def get_crf(height):
-  if (height > 1080):
-    return 23
-  elif (height > 720):
-    return 25
-  else:
-    return 28
-
+  
 def main():
   downloaded_videos = []
   ydl_opts = {
@@ -75,7 +67,7 @@ def main():
 
     temp_file_name = file_name_root + ".tmp"
 
-    ffmpeg.output(v1, a1, temp_file_name, format='mp4', pix_fmt='yuv420p', vcodec='libx265', preset='ultrafast', crf=get_crf(min(MAX_HEIGHT,new_height)), tune="fastdecode", vtag="hvc1", acodec='aac', r=(2.0*get_frame_rate(in_file_name))).run(overwrite_output=True)
+    ffmpeg.output(v1, a1, temp_file_name, format='mp4', pix_fmt='yuv420p', vcodec='libx265', preset='ultrafast', crf=20, tune="fastdecode", vtag="hvc1", acodec='aac', r=(2.0*get_frame_rate(in_file_name))).run(overwrite_output=True)
     os.rename(temp_file_name, destination_file)
 
 if __name__== "__main__":
