@@ -7,7 +7,8 @@ import youtube_dl
 
 MAX_HEIGHT = 1440
 MAX_WIDTH = 2960
-MAX_FRAME_RATE = 30
+MAX_INPUT_FRAME_RATE = 60
+MAX_OUTPUT_FRAME_RATE = 60
 FILE_NAME_TEMPLATE = "%(uploader)s_%(title)s_%(id)s"
 
 def get_height(filename):
@@ -29,7 +30,7 @@ def get_frame_rate(filename):
 def main():
   downloaded_videos = []
   ydl_opts = {
-    'format': 'bestvideo[fps<=%(fps)s]+bestaudio/best' % {"fps": MAX_FRAME_RATE},
+    'format': 'bestvideo[fps<=%(fps)s]+bestaudio/best' % {"fps": MAX_INPUT_FRAME_RATE},
     'outtmpl': FILE_NAME_TEMPLATE,
     'restrictfilenames': True,
     'merge_output_format': 'mkv'
@@ -67,7 +68,7 @@ def main():
 
     temp_file_name = file_name_root + ".tmp"
 
-    ffmpeg.output(v1, a1, temp_file_name, format='mp4', pix_fmt='yuv420p', vcodec='libx265', preset='ultrafast', crf=20, tune="fastdecode", vtag="hvc1", acodec='aac', r=(2.0*get_frame_rate(in_file_name))).run(overwrite_output=True)
+    ffmpeg.output(v1, a1, temp_file_name, format='mp4', pix_fmt='yuv420p', vcodec='libx265', preset='ultrafast', crf=20, tune="fastdecode", vtag="hvc1", acodec='aac', r=min(2.0*get_frame_rate(in_file_name), MAX_OUTPUT_FRAME_RATE)).run(overwrite_output=True)
     os.rename(temp_file_name, destination_file)
 
 if __name__== "__main__":
