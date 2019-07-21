@@ -9,7 +9,7 @@ MAX_HEIGHT = 1440
 MAX_WIDTH = 2960
 MAX_INPUT_FRAME_RATE = 60
 MAX_OUTPUT_FRAME_RATE = 60
-FILE_NAME_TEMPLATE = "%(uploader)s_%(title)s_%(id)s"
+FILE_NAME_TEMPLATE = "%(uploader)s_%(title)s"
 
 def get_height(filename):
   try:
