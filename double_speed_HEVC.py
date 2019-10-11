@@ -10,6 +10,7 @@ MAX_WIDTH = 2960
 MAX_INPUT_FRAME_RATE = 60
 MAX_OUTPUT_FRAME_RATE = 60
 FILE_NAME_TEMPLATE = "%(uploader)s_%(title)s"
+SPEED_FACTOR = 2.0
 
 def get_height(filename):
   try:
@@ -54,21 +55,21 @@ def main():
 
   for in_file_name in downloaded_videos:
     file_name_root = os.path.splitext(in_file_name)[0]
-    destination_file = file_name_root  + "_[2XHEVC].mp4"
+    destination_file = file_name_root  + "_[%dx].mp4" % SPEED_FACTOR
     if os.path.isfile(destination_file):
       continue
 
     new_height = get_height(in_file_name)
 
     inputObject = ffmpeg.input(in_file_name)
-    v1 = inputObject['v'].setpts("0.5*PTS")
+    v1 = inputObject['v'].setpts("PTS/%s" % SPEED_FACTOR)
     if (new_height > MAX_HEIGHT):
       v1 = v1.filter('scale', -2, MAX_HEIGHT)
-    a1 = inputObject['a'].filter('atempo', 2.0)
+    a1 = inputObject['a'].filter('atempo', SPEED_FACTOR)
 
     temp_file_name = file_name_root + ".tmp"
 
-    ffmpeg.output(v1, a1, temp_file_name, format='mp4', pix_fmt='yuv420p', vcodec='libx265', preset='ultrafast', crf=20, tune="fastdecode", vtag="hvc1", acodec='aac', audio_bitrate="192k", r=min(2.0*get_frame_rate(in_file_name), MAX_OUTPUT_FRAME_RATE)).run(overwrite_output=True)
+    ffmpeg.output(v1, a1, temp_file_name, format='mp4', pix_fmt='yuv420p', vcodec='libx265', preset='ultrafast', crf=20, tune="fastdecode", vtag="hvc1", acodec='aac', audio_bitrate="192k", r=min(SPEED_FACTOR*get_frame_rate(in_file_name), MAX_OUTPUT_FRAME_RATE)).run(overwrite_output=True)
     os.rename(temp_file_name, destination_file)
 
 if __name__== "__main__":
