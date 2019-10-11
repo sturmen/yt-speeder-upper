@@ -68,7 +68,7 @@ def main():
 
     temp_file_name = file_name_root + ".tmp"
 
-    ffmpeg.output(v1, a1, temp_file_name, format='mp4', pix_fmt='yuv420p', vcodec='libx265', preset='ultrafast', crf=20, tune="fastdecode", vtag="hvc1", acodec='aac', audio_bitrate="128k", r=min(2.0*get_frame_rate(in_file_name), MAX_OUTPUT_FRAME_RATE)).run(overwrite_output=True)
+    ffmpeg.output(v1, a1, temp_file_name, format='mp4', pix_fmt='yuv420p', vcodec='libx265', preset='ultrafast', crf=20, tune="fastdecode", vtag="hvc1", acodec='aac', audio_bitrate="192k", r=min(2.0*get_frame_rate(in_file_name), MAX_OUTPUT_FRAME_RATE)).run(overwrite_output=True)
     os.rename(temp_file_name, destination_file)
 
 if __name__== "__main__":
