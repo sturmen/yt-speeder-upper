@@ -6,12 +6,14 @@ import sys
 import os
 import youtube_dl
 
+MAX_RETRIES = 5
 MAX_HEIGHT = 1440
 MAX_WIDTH = 2960
 MAX_INPUT_FRAME_RATE = 60
 MAX_OUTPUT_FRAME_RATE = 60
 FILE_NAME_TEMPLATE = "%(uploader)s_%(title)s"
 SPEED_FACTOR = 2.0
+GOP_LENGTH_SECONDS = 10
 
 
 def get_height(filename):
@@ -36,8 +38,34 @@ def get_frame_rate(filename):
     return float(fps)
 
 
+def download_videos(videos, opts, retries_remaining):
+    result_list = []
+    with youtube_dl.YoutubeDL(opts) as ydl:
+        for url in videos:
+            try:
+                extracted_info = ydl.extract_info(url)
+                if "_type" in extracted_info and "entries" in extracted_info and extracted_info[
+                        "_type"] is 'playlist':
+                    for entry in extracted_info["entries"]:
+                        filename = ydl.prepare_filename(entry) + ".mkv"
+                        if filename not in result_list:
+                            result_list.append(filename)
+                else:
+                    filename = ydl.prepare_filename(extracted_info) + ".mkv"
+                    if filename not in result_list:
+                        result_list.append(filename)
+            except:
+                print(f'failed to download {url}')
+                return download_videos(videos, opts, retries_remaining - 1)
+
+    return result_list
+
+
+def calculate_gop_size(framerate):
+    return round(framerate * GOP_LENGTH_SECONDS / 2) * 2
+
+
 def main():
-    downloaded_videos = []
     ydl_opts = {
         'format': 'bestvideo[fps<=%(fps)s]+bestaudio/best' % {
             "fps": MAX_INPUT_FRAME_RATE
@@ -47,22 +75,7 @@ def main():
         'merge_output_format': 'mkv'
     }
 
-    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-        for url in sys.argv[1:]:
-            try:
-                extracted_info = ydl.extract_info(url)
-                if "_type" in extracted_info and "entries" in extracted_info and extracted_info[
-                        "_type"] is 'playlist':
-                    for entry in extracted_info["entries"]:
-                        filename = ydl.prepare_filename(entry) + ".mkv"
-                        if filename not in downloaded_videos:
-                            downloaded_videos.append(filename)
-                else:
-                    filename = ydl.prepare_filename(extracted_info) + ".mkv"
-                    if filename not in downloaded_videos:
-                        downloaded_videos.append(filename)
-            except:
-                print(f'failed to download {url}')
+    downloaded_videos = download_videos(sys.argv[1:], ydl_opts, MAX_RETRIES)
 
     for in_file_name in downloaded_videos:
         file_name_root = os.path.splitext(in_file_name)[0]
@@ -82,19 +95,20 @@ def main():
 
         temp_file_name = file_name_root + ".tmp"
 
-        ffmpeg.output(
-            v1,
-            a1,
-            temp_file_name,
-            format='mp4',
-            vcodec='h264_vaapi',
-            video_bitrate="8M",
-            gop_size=240,
-            acodec='aac',
-            audio_bitrate="192k",
-            r=min(SPEED_FACTOR * get_frame_rate(in_file_name),
-                  MAX_OUTPUT_FRAME_RATE)).global_args('-hide_banner').run(
-                      overwrite_output=True)
+        output_framerate = min(SPEED_FACTOR * get_frame_rate(in_file_name),
+                               MAX_OUTPUT_FRAME_RATE)
+
+        ffmpeg.output(v1,
+                      a1,
+                      temp_file_name,
+                      format='mp4',
+                      vcodec='h264_vaapi',
+                      video_bitrate="8M",
+                      g=calculate_gop_size(output_framerate),
+                      acodec='aac',
+                      audio_bitrate="192k",
+                      r=output_framerate).global_args('-hide_banner').run(
+                          overwrite_output=True)
         ffmpeg.input(temp_file_name).output(
             destination_file, codec='copy').global_args('-hide_banner').run(
                 overwrite_output=True)
