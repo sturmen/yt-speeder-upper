@@ -62,7 +62,9 @@ def download_videos(videos, opts, retries_remaining):
                     if filename not in result_list:
                         result_list.append(filename)
             except:
-                print(f'failed to download {url}\nretries left: {retries_remaining - 1}')
+                print(
+                    f'failed to download {url}\nretries left: {retries_remaining - 1}'
+                )
                 return download_videos(videos, opts, retries_remaining - 1)
 
     return result_list
@@ -99,23 +101,21 @@ def main():
         output_framerate = min(SPEED_FACTOR * get_frame_rate(in_file_name),
                                MAX_OUTPUT_FRAME_RATE)
 
-        ffmpeg.output(
-            v1,
-            a1,
-            temp_file_name,
-            format='mp4',
-            pix_fmt='yuv420p',
-            vcodec='libx265',
-            preset='ultrafast',
-            crf=20,
-            tune="fastdecode",
-            g=calculate_gop_size(output_framerate),
-            vtag="hvc1",
-            acodec='aac',
-            audio_bitrate="192k",
-            r=min(SPEED_FACTOR * get_frame_rate(in_file_name),
-                  MAX_OUTPUT_FRAME_RATE)).run(
-                      overwrite_output=True).global_args('-hide_banner')
+        ffmpeg.output(v1,
+                      a1,
+                      temp_file_name,
+                      format='mp4',
+                      pix_fmt='yuv420p',
+                      vcodec='libx265',
+                      preset='ultrafast',
+                      crf=20,
+                      tune="fastdecode",
+                      g=calculate_gop_size(output_framerate),
+                      vtag="hvc1",
+                      acodec='aac',
+                      audio_bitrate="192k",
+                      r=output_framerate).global_args('-hide_banner').run(
+                          overwrite_output=True)
         os.rename(temp_file_name, destination_file)
 
 
