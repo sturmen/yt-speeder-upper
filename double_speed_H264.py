@@ -7,8 +7,10 @@ import youtube_dl
 
 MAX_HEIGHT = 1440
 MAX_WIDTH = 2960
-MAX_FRAME_RATE = 30
-FILE_NAME_TEMPLATE = "%(uploader)s_%(title)s_%(id)s"
+MAX_INPUT_FRAME_RATE = 60
+MAX_OUTPUT_FRAME_RATE = 60
+FILE_NAME_TEMPLATE = "%(uploader)s_%(title)s"
+SPEED_FACTOR = 2.0
 
 def get_height(filename):
   try:
@@ -25,19 +27,11 @@ def get_frame_rate(filename):
   video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
   fps = eval(video_stream['r_frame_rate'])
   return float(fps)
-
-def get_crf(height):
-  if (height > 1080):
-    return 17
-  elif (height > 720):
-    return 20
-  else:
-    return 23
-
+  
 def main():
   downloaded_videos = []
   ydl_opts = {
-    'format': 'bestvideo[fps<=%(fps)s]+bestaudio/best' % {"fps": MAX_FRAME_RATE},
+    'format': 'bestvideo[fps<=%(fps)s]+bestaudio/best' % {"fps": MAX_INPUT_FRAME_RATE},
     'outtmpl': FILE_NAME_TEMPLATE,
     'restrictfilenames': True,
     'merge_output_format': 'mkv'
@@ -61,22 +55,23 @@ def main():
 
   for in_file_name in downloaded_videos:
     file_name_root = os.path.splitext(in_file_name)[0]
-    destination_file = file_name_root  + " [2X].mp4"
+    destination_file = file_name_root  + "_[%dx].mp4" % SPEED_FACTOR
     if os.path.isfile(destination_file):
       continue
 
     new_height = get_height(in_file_name)
 
-    inputObject = ffmpeg.input(in_file_name)
-    v1 = inputObject['v'].setpts("0.5*PTS")
+    inputObject = ffmpeg.input(in_file_name, vaapi_device='/dev/dri/renderD128')
+    v1 = inputObject['v'].setpts("PTS/%s" % SPEED_FACTOR).filter_(filter_name='hwupload')
     if (new_height > MAX_HEIGHT):
-      v1 = v1.filter('scale', -2, MAX_HEIGHT)
-    a1 = inputObject['a'].filter('atempo', 2.0)
+      v1 = v1.filter_('scale_vaapi', w = -2, h = MAX_WIDTH, format = 'nv12')
+    a1 = inputObject['a'].filter('atempo', SPEED_FACTOR)
 
     temp_file_name = file_name_root + ".tmp"
 
-    ffmpeg.output(v1, a1, temp_file_name, format='mp4', pix_fmt='yuv420p', vcodec='libx264', preset='ultrafast', tune='film', crf=get_crf(min(MAX_HEIGHT,new_height)), acodec='aac', r=(2.0*get_frame_rate(in_file_name))).run(overwrite_output=True)
-    os.rename(temp_file_name, destination_file)
+    ffmpeg.output(v1, a1, temp_file_name, format='mp4', vcodec='h264_vaapi', video_bitrate="8M", gop_size = 240, acodec='aac', audio_bitrate="192k", r=min(SPEED_FACTOR*get_frame_rate(in_file_name), MAX_OUTPUT_FRAME_RATE)).global_args('-hide_banner').run(overwrite_output=True)
+    ffmpeg.input(temp_file_name).output(destination_file, codec='copy').global_args('-hide_banner').run(overwrite_output=True)
+    os.remove(temp_file_name)
 
 if __name__== "__main__":
   main()
