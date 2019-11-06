@@ -40,6 +40,10 @@ def get_frame_rate(filename):
 
 def download_videos(videos, opts, retries_remaining):
     result_list = []
+    if retries_remaining < 1:
+        print('no more retries left. aborting.')
+        return result_list
+
     with youtube_dl.YoutubeDL(opts) as ydl:
         for url in videos:
             try:
@@ -55,7 +59,7 @@ def download_videos(videos, opts, retries_remaining):
                     if filename not in result_list:
                         result_list.append(filename)
             except:
-                print(f'failed to download {url}')
+                print(f'failed to download {url}\nretries left: {retries_remaining - 1}')
                 return download_videos(videos, opts, retries_remaining - 1)
 
     return result_list
