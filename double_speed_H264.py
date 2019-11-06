@@ -84,20 +84,24 @@ def main():
             continue
 
         new_height = get_height(in_file_name)
+        output_framerate = min(SPEED_FACTOR * get_frame_rate(in_file_name),
+                               MAX_OUTPUT_FRAME_RATE)
 
         inputObject = ffmpeg.input(in_file_name,
                                    vaapi_device='/dev/dri/renderD128')
-        v1 = inputObject['v'].setpts("PTS/%s" % SPEED_FACTOR)
-        v1 = v1.filter('format', 'nv12').filter_(filter_name='hwupload')
+        v1 = inputObject['v'].setpts("PTS/%s" % SPEED_FACTOR).filter(
+            'fps', output_framerate)
         if (new_height > MAX_HEIGHT):
-            v1 = v1.filter('scale_vaapi', -2, MAX_HEIGHT)
+            v1 = v1.filter(
+                'scale',
+                -2,
+                MAX_HEIGHT,
+            )
+        v1 = v1.filter('format', 'nv12').filter_(filter_name='hwupload')
 
         a1 = inputObject['a'].filter('atempo', SPEED_FACTOR)
 
         temp_file_name = file_name_root + ".tmp"
-
-        output_framerate = min(SPEED_FACTOR * get_frame_rate(in_file_name),
-                               MAX_OUTPUT_FRAME_RATE)
 
         ffmpeg.output(v1,
                       a1,
@@ -108,8 +112,7 @@ def main():
                       vprofile='main',
                       g=calculate_gop_size(output_framerate),
                       acodec='aac',
-                      audio_bitrate="192k",
-                      r=output_framerate).global_args('-hide_banner').run(
+                      audio_bitrate="192k").global_args('-hide_banner').run(
                           overwrite_output=True)
         ffmpeg.input(temp_file_name).output(
             destination_file, codec='copy').global_args('-hide_banner').run(
