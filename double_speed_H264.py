@@ -87,10 +87,11 @@ def main():
 
         inputObject = ffmpeg.input(in_file_name,
                                    vaapi_device='/dev/dri/renderD128')
-        v1 = inputObject['v'].setpts(
-            "PTS/%s" % SPEED_FACTOR).filter_(filter_name='hwupload')
+        v1 = inputObject['v'].setpts("PTS/%s" % SPEED_FACTOR)
+        v1 = v1.filter('format', 'nv12').filter_(filter_name='hwupload')
         if (new_height > MAX_HEIGHT):
-            v1 = v1.filter_('scale_vaapi', w=-2, h=MAX_WIDTH, format='nv12')
+            v1 = v1.filter('scale_vaapi', -2, MAX_HEIGHT)
+
         a1 = inputObject['a'].filter('atempo', SPEED_FACTOR)
 
         temp_file_name = file_name_root + ".tmp"
@@ -104,6 +105,7 @@ def main():
                       format='mp4',
                       vcodec='h264_vaapi',
                       video_bitrate="8M",
+                      vprofile='main',
                       g=calculate_gop_size(output_framerate),
                       acodec='aac',
                       audio_bitrate="192k",
