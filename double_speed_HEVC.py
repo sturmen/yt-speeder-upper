@@ -61,6 +61,11 @@ def download_videos(videos, opts, retries_remaining):
                     filename = ydl.prepare_filename(extracted_info) + ".mkv"
                     if filename not in result_list:
                         result_list.append(filename)
+            except KeyboardInterrupt:
+                print("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                print("keyboard interrupt, aborting")
+                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                exit()
             except:
                 print(
                     f'failed to download {url}\nretries left: {retries_remaining - 1}'
