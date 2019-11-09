@@ -103,12 +103,10 @@ def main():
         v1 = inputObject['v'].setpts("PTS/%s" % SPEED_FACTOR).filter(
             'fps', output_framerate)
         if (new_height > MAX_HEIGHT):
-            v1 = v1.filter(
-                'scale',
-                MAX_WIDTH,
-                MAX_HEIGHT,
-                force_original_aspect_ratio="decrease"
-            )
+            v1 = v1.filter('scale',
+                           MAX_WIDTH,
+                           MAX_HEIGHT,
+                           force_original_aspect_ratio="decrease")
         v1 = v1.filter('format', 'nv12').filter_(filter_name='hwupload')
 
         a1 = inputObject['a'].filter('atempo', SPEED_FACTOR)
