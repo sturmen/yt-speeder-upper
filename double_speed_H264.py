@@ -105,8 +105,9 @@ def main():
         if (new_height > MAX_HEIGHT):
             v1 = v1.filter(
                 'scale',
-                -2,
+                MAX_WIDTH,
                 MAX_HEIGHT,
+                force_original_aspect_ratio="decrease"
             )
         v1 = v1.filter('format', 'nv12').filter_(filter_name='hwupload')
 
