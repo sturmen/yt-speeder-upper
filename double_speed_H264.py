@@ -100,8 +100,7 @@ def main():
 
         inputObject = ffmpeg.input(in_file_name,
                                    vaapi_device='/dev/dri/renderD128')
-        v1 = inputObject['v'].setpts("PTS/%s" % SPEED_FACTOR).filter(
-            'fps', output_framerate)
+        v1 = inputObject['v'].setpts("PTS/%s" % SPEED_FACTOR)
         if (new_height > MAX_HEIGHT):
             v1 = v1.filter('scale',
                            MAX_WIDTH,
@@ -122,7 +121,8 @@ def main():
                       vprofile='main',
                       g=calculate_gop_size(output_framerate),
                       acodec='aac',
-                      audio_bitrate="192k").global_args('-hide_banner').run(
+                      audio_bitrate="192k",
+                      r=output_framerate).global_args('-hide_banner').run(
                           overwrite_output=True)
         ffmpeg.input(temp_file_name).output(
             destination_file, codec='copy').global_args('-hide_banner').run(
