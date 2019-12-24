@@ -52,7 +52,7 @@ def download_videos(videos, opts, retries_remaining):
             try:
                 extracted_info = ydl.extract_info(url)
                 if "_type" in extracted_info and "entries" in extracted_info and extracted_info[
-                        "_type"] is 'playlist':
+                        "_type"] == 'playlist':
                     for entry in extracted_info["entries"]:
                         filename = ydl.prepare_filename(entry) + ".mkv"
                         if filename not in result_list:
