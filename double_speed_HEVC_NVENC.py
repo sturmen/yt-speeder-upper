@@ -98,11 +98,6 @@ def main():
 
         inputObject = ffmpeg.input(in_file_name)
         v1 = inputObject['v'].setpts("PTS/%s" % SPEED_FACTOR)
-        if (new_height > MAX_HEIGHT):
-            v1 = v1.filter('scale',
-                           -2,
-                           MAX_HEIGHT,
-                           force_original_aspect_ratio="decrease")
         a1 = inputObject['a'].filter('atempo', SPEED_FACTOR)
 
         temp_file_name = file_name_root + ".tmp"
@@ -117,9 +112,9 @@ def main():
                       temp_file_name,
                       format='mp4',
                       pix_fmt='yuv420p',
-                      vcodec='libx265',
+                      vcodec='hevc_nvenc',
                       preset='slow',
-                      crf=20,
+                      video_bitrate="20M",
                       tune="fastdecode",
                       vtag="hvc1",
                       acodec='aac',
