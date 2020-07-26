@@ -115,10 +115,9 @@ def main():
                       vcodec='hevc_nvenc',
                       preset='slow',
                       video_bitrate="20M",
-                      tune="fastdecode",
                       vtag="hvc1",
                       acodec='aac',
-                      audio_bitrate="128k",
+                      audio_bitrate="192k",
                       r=output_framerate).global_args('-hide_banner').run(
                           overwrite_output=True)
         encoded_video_count += 1
