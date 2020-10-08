@@ -11,7 +11,7 @@ MAX_RETRIES = 5
 MAX_HEIGHT = 1080
 MAX_WIDTH = 2400
 MAX_INPUT_FRAME_RATE = 60
-MAX_OUTPUT_FRAME_RATE = 120
+MAX_OUTPUT_FRAME_RATE = 60
 FILE_NAME_TEMPLATE = "%(uploader)s_%(title)s"
 SPEED_FACTOR = 2.50
 
@@ -98,6 +98,11 @@ def main():
 
         inputObject = ffmpeg.input(in_file_name)
         v1 = inputObject['v'].setpts("PTS/%s" % SPEED_FACTOR)
+        if (new_height > MAX_HEIGHT):
+            v1 = v1.filter('scale',
+                           -2,
+                           MAX_HEIGHT,
+                           force_original_aspect_ratio="decrease")
         a1 = inputObject['a'].filter('atempo', SPEED_FACTOR)
 
         temp_file_name = file_name_root + ".tmp"
