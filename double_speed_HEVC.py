@@ -98,11 +98,11 @@ def main():
 
         inputObject = ffmpeg.input(in_file_name)
         v1 = inputObject['v'].setpts("PTS/%s" % SPEED_FACTOR)
-        # if (new_height > MAX_HEIGHT):
-        # v1 = v1.filter('scale',
-        #                -2,
-        #                MAX_HEIGHT,
-        #                force_original_aspect_ratio="decrease")
+        if (new_height > MAX_HEIGHT):
+            v1 = v1.filter('scale',
+                       -2,
+                       MAX_HEIGHT,
+                       force_original_aspect_ratio="decrease")
         a1 = inputObject['a'].filter('atempo', SPEED_FACTOR)
 
         temp_file_name = file_name_root + ".tmp"
