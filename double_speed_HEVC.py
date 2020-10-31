@@ -18,6 +18,8 @@ MAX_OUTPUT_FRAME_RATE = 60
 FILE_NAME_TEMPLATE = "%(uploader)s_%(title)s"
 SPEED_FACTOR = 2.50
 
+BLOCKED_CATEGORIES = ["sponsor", "intro", "outro"]
+
 
 def get_height(filename):
     try:
@@ -86,6 +88,65 @@ def fetch_sponsored_bits(video_id):
     return output
 
 
+def add_sponsor_video_filter(video_stream, audio_stream, video_id):
+    sponsored_segment_response = fetch_sponsored_bits(video_id)
+
+    if sponsored_segment_response == 'Not Found':
+        print("No sponsored segments for this one.")
+        return video_stream, audio_stream
+    else:
+        segments_to_keep = find_worthwhile_clips(
+            json.loads(sponsored_segment_response))
+        return trim_video(video_stream, segments_to_keep), trim_audio(
+            audio_stream, segments_to_keep)
+
+
+def trim_video(video_stream, segments_to_keep):
+    streams_to_concat = []
+    split_streams = video_stream.filter_multi_output('split',
+                                                     len(segments_to_keep))
+    for i, segment in enumerate(segments_to_keep):
+        trimmed_stream = split_streams[i].trim(
+            start=segment[0], end=segment[1]).setpts("PTS-STARTPTS")
+        streams_to_concat.append(trimmed_stream)
+    return video_stream.concat(*streams_to_concat)
+
+
+def trim_audio(audio_stream, segments_to_keep):
+    streams_to_concat = []
+    split_streams = audio_stream.filter_multi_output('asplit',
+                                                     len(segments_to_keep))
+    for i, segment in enumerate(segments_to_keep):
+        trimmed_stream = split_streams[i].filter("atrim",
+                                                 start=segment[0],
+                                                 end=segment[1]).filter(
+                                                     "asetpts", "PTS-STARTPTS")
+        streams_to_concat.append(trimmed_stream)
+
+    return audio_stream.filter(
+        streams_to_concat,
+        "concat",
+        n=len(segments_to_keep),
+        v=0,
+        a=1,
+    )  # TODO: figure out why this doesn't work
+
+
+def find_worthwhile_clips(segments):
+    output = []
+    start = 0.0
+    for unwanted_segment in segments:
+        segment_category = unwanted_segment["category"]
+        if segment_category in BLOCKED_CATEGORIES:
+            segment_start = unwanted_segment["segment"][0]
+            segment_end = unwanted_segment["segment"][1]
+            if segment_start > start:
+                output.append((start, segment_start))
+            start = segment_end
+
+    return output
+
+
 def main():
     ydl_opts = {
         'format': 'bestvideo[fps<=%(fps)s]+bestaudio/best' % {
@@ -101,19 +162,6 @@ def main():
     encoded_video_count = 0
 
     for display_id, in_file_name in downloaded_videos:
-        sponsored_segment_response = fetch_sponsored_bits(display_id)
-
-        if sponsored_segment_response == 'Not Found':
-            print("No sponsored segments for this one.")
-        else:
-            segments = json.loads(sponsored_segment_response)
-            for segment in segments:
-                segment_category = segment["category"]
-                segment_start = segment["segment"][0]
-                segment_end = segment["segment"][1]
-                print(
-                    f'Found {segment_category} block of length {segment_end - segment_start}'
-                )
 
         file_name_root = os.path.splitext(in_file_name)[0]
         destination_file = "{:.2f}x_".format(
@@ -126,13 +174,16 @@ def main():
 
         inputObject = ffmpeg.input(in_file_name)
 
-        v1 = inputObject['v'].setpts("PTS/%s" % SPEED_FACTOR)
+        v1 = inputObject['v']
+        a1 = inputObject['a']
+        v1, a1 = add_sponsor_video_filter(v1, a1, display_id)
+        v1 = v1.setpts("PTS/%s" % SPEED_FACTOR)
         if (new_height > MAX_HEIGHT):
             v1 = v1.filter('scale',
                            -2,
                            MAX_HEIGHT,
                            force_original_aspect_ratio="decrease")
-        a1 = inputObject['a'].filter('atempo', SPEED_FACTOR)
+        a1 = a1.filter('atempo', SPEED_FACTOR)
 
         temp_file_name = file_name_root + ".tmp"
 
