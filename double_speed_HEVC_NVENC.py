@@ -119,7 +119,7 @@ def main():
                       pix_fmt='yuv420p',
                       vcodec='hevc_nvenc',
                       preset='slow',
-                      video_bitrate="20M",
+                      video_bitrate="6M",
                       vtag="hvc1",
                       acodec='aac',
                       audio_bitrate="192k",
