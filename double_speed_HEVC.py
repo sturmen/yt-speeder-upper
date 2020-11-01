@@ -43,6 +43,23 @@ def get_frame_rate(filename):
     return float(fps)
 
 
+def get_total_duration(filename):
+    try:
+        probe = ffmpeg.probe(filename)
+        video_stream = next((stream for stream in probe['streams']
+                             if stream['codec_type'] == 'video'), None)
+        return get_sec(video_stream['tags']['DURATION'])
+    except ffmpeg.Error as e:
+        print(e.stderr)
+        raise e
+
+
+def get_sec(time_str):
+    """Get Seconds from time."""
+    h, m, s = time_str.split(':')
+    return int(h) * 3600 + int(m) * 60 + float(s)
+
+
 def download_videos(videos, opts, retries_remaining):
     result_list = []
     if retries_remaining < 1:
@@ -124,26 +141,26 @@ def trim_audio(audio_stream, segments_to_keep):
                                                      "asetpts", "PTS-STARTPTS")
         streams_to_concat.append(trimmed_stream)
 
-    return audio_stream.concat(
+    return ffmpeg.concat(
         *streams_to_concat,
-        n=len(segments_to_keep),
+        n=len(streams_to_concat),
         v=0,
         a=1,
     )
 
 
-def find_worthwhile_clips(segments):
+def find_worthwhile_clips(segments, total_duration):
     output = []
     start = 0.0
-    for unwanted_segment in segments:
-        segment_category = unwanted_segment["category"]
-        if segment_category in BLOCKED_CATEGORIES:
-            segment_start = unwanted_segment["segment"][0]
-            segment_end = unwanted_segment["segment"][1]
-            if segment_start > start:
-                output.append((start, segment_start))
-            start = segment_end
+    for unwanted_segment in sorted([x['segment'] for x in segments]):
+        segment_start = unwanted_segment[0]
+        segment_end = unwanted_segment[1]
+        if segment_start > start:
+            output.append((start, segment_start))
+        start = segment_end
 
+    if start < total_duration:
+        output.append((start, total_duration))
     return output
 
 
@@ -174,9 +191,11 @@ def main():
 
         inputObject = ffmpeg.input(in_file_name)
 
+        total_length = get_total_duration(in_file_name)
+
         v1 = inputObject['v']
         a1 = inputObject['a']
-        v1, a1 = add_sponsor_video_filter(v1, a1, display_id)
+        v1, a1 = add_sponsor_video_filter(v1, a1, display_id, total_length)
         v1 = v1.setpts("PTS/%s" % SPEED_FACTOR)
         if (new_height > MAX_HEIGHT):
             v1 = v1.filter('scale',
@@ -198,7 +217,6 @@ def main():
                       format='mp4',
                       pix_fmt='yuv420p',
                       vcodec='libx265',
-                      preset='slow',
                       crf=20,
                       tune="fastdecode",
                       vtag="hvc1",
