@@ -112,7 +112,12 @@ def add_sponsor_video_filter(video_stream, audio_stream, video_id,
     else:
         segments_to_keep = find_worthwhile_clips(
             json.loads(sponsored_segment_response), total_duration)
-        print(f"Keeping {segments_to_keep} for {video_id}")
+        time_saved = int(
+            round(total_duration - sum([x[1] - x[0]
+                                        for x in segments_to_keep])))
+        print(
+            f"Keeping {segments_to_keep} for {video_id}, saving approximately {time_saved} seconds"
+        )
         return trim_video(video_stream, segments_to_keep), trim_audio(
             audio_stream, segments_to_keep)
 
