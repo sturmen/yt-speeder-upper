@@ -105,7 +105,8 @@ def fetch_sponsored_bits(video_id):
     return output
 
 
-def add_sponsor_video_filter(video_stream, audio_stream, video_id):
+def add_sponsor_video_filter(video_stream, audio_stream, video_id,
+                             total_duration):
     sponsored_segment_response = fetch_sponsored_bits(video_id)
 
     if sponsored_segment_response == 'Not Found':
@@ -113,7 +114,7 @@ def add_sponsor_video_filter(video_stream, audio_stream, video_id):
         return video_stream, audio_stream
     else:
         segments_to_keep = find_worthwhile_clips(
-            json.loads(sponsored_segment_response))
+            json.loads(sponsored_segment_response), total_duration)
         print(f"Keeping {segments_to_keep} for {video_id}")
         return trim_video(video_stream, segments_to_keep), trim_audio(
             audio_stream, segments_to_keep)
@@ -127,7 +128,10 @@ def trim_video(video_stream, segments_to_keep):
         trimmed_stream = split_streams[i].trim(
             start=segment[0], end=segment[1]).setpts("PTS-STARTPTS")
         streams_to_concat.append(trimmed_stream)
-    return video_stream.concat(*streams_to_concat)
+    return ffmpeg.concat(
+        *streams_to_concat,
+        n=len(streams_to_concat),
+    )
 
 
 def trim_audio(audio_stream, segments_to_keep):
