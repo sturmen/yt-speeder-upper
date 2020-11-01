@@ -74,15 +74,12 @@ def download_videos(videos, opts, retries_remaining):
                         "_type"] == 'playlist':
                     for entry in extracted_info["entries"]:
                         filename = ydl.prepare_filename(entry) + ".mkv"
-                        # pprint(f'=== INFO FOR {filename} === ')
-                        # pprint(entry)
                         if filename not in result_list:
-                            result_list.append((entry['display_id'], filename))
+                            result_list.append((entry['id'], filename))
                 else:
                     filename = ydl.prepare_filename(extracted_info) + ".mkv"
                     if filename not in result_list:
-                        result_list.append(
-                            (extracted_info['display_id'], filename))
+                        result_list.append((extracted_info['id'], filename))
             except KeyboardInterrupt:
                 print("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 print("keyboard interrupt, aborting")
