@@ -97,6 +97,7 @@ def add_sponsor_video_filter(video_stream, audio_stream, video_id):
     else:
         segments_to_keep = find_worthwhile_clips(
             json.loads(sponsored_segment_response))
+        print(f"Keeping {segments_to_keep} for {video_id}")
         return trim_video(video_stream, segments_to_keep), trim_audio(
             audio_stream, segments_to_keep)
 
@@ -123,13 +124,12 @@ def trim_audio(audio_stream, segments_to_keep):
                                                      "asetpts", "PTS-STARTPTS")
         streams_to_concat.append(trimmed_stream)
 
-    return audio_stream.filter(
-        streams_to_concat,
-        "concat",
+    return audio_stream.concat(
+        *streams_to_concat,
         n=len(segments_to_keep),
         v=0,
         a=1,
-    )  # TODO: figure out why this doesn't work
+    )
 
 
 def find_worthwhile_clips(segments):
