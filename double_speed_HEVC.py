@@ -231,7 +231,8 @@ def main():
                       audio_bitrate="128k",
                       r=output_framerate,
                       **{
-                          'metadata:s:a:0': 'language=eng'
+                          'metadata:s:a:0': 'language=eng',
+                          'x265-params': 'log-level=error'
                       }).global_args('-hide_banner').run(overwrite_output=True)
         encoded_video_count += 1
         end = datetime.now()
