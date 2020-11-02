@@ -95,7 +95,8 @@ def download_videos(videos, opts, retries_remaining):
 
 
 def fetch_sponsored_bits(video_id):
-    payload = f'videoID={video_id}&categories=["sponsor", "intro", "outro"]'
+    categories_string = str(BLOCKED_CATEGORIES).replace("'", '"')
+    payload = f'videoID={video_id}&categories={categories_string}'
     r = requests.get(f'https://sponsor.ajay.app/api/skipSegments',
                      params=payload)
     output = r.text
