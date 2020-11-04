@@ -3,6 +3,7 @@
 
 import ffmpeg
 from filelock import Timeout, FileLock
+import glob
 import json
 import sys
 import os
@@ -16,7 +17,7 @@ MAX_HEIGHT = 1080
 MAX_WIDTH = 1920
 MAX_INPUT_FRAME_RATE = 60
 MAX_OUTPUT_FRAME_RATE = 60
-FILE_NAME_TEMPLATE = "%(uploader)s_%(title)s"
+FILE_NAME_TEMPLATE = "%(id)s"
 SPEED_FACTOR = 2.50
 
 BLOCKED_CATEGORIES = ["sponsor", "intro", "outro"]
@@ -77,13 +78,11 @@ def download_videos(videos, opts, retries_remaining):
                 if "_type" in extracted_info and "entries" in extracted_info and extracted_info[
                         "_type"] == 'playlist':
                     for entry in extracted_info["entries"]:
-                        filename = ydl.prepare_filename(entry) + ".mkv"
-                        if filename not in result_list:
-                            result_list.append((entry['id'], filename))
+                        result_list.append(
+                            parse_video_info_for_filename(entry))
                 else:
-                    filename = ydl.prepare_filename(extracted_info) + ".mkv"
-                    if filename not in result_list:
-                        result_list.append((extracted_info['id'], filename))
+                    result_list.append(
+                        parse_video_info_for_filename(extracted_info))
             except KeyboardInterrupt:
                 print("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 print("keyboard interrupt, aborting")
@@ -96,6 +95,15 @@ def download_videos(videos, opts, retries_remaining):
                 return download_videos(videos, opts, retries_remaining - 1)
 
     return result_list
+
+
+def parse_video_info_for_filename(entry):
+    video_id = entry['id']
+    video_title = entry['title']
+    uploader = entry['uploader']
+    filename = f"{uploader}?-?{video_title}".encode(
+        'ascii', 'replace').decode().replace('?', '_')
+    return video_id, filename
 
 
 def fetch_sponsored_bits(video_id):
@@ -189,14 +197,16 @@ def main():
 
     encoded_video_count = 0
 
-    for display_id, in_file_name in downloaded_videos:
-
-        file_name_root = os.path.splitext(in_file_name)[0]
-        destination_file = "{:.2f}x_".format(
-            SPEED_FACTOR) + file_name_root + ".mp4"
-        if os.path.isfile(destination_file):
-            print("%s already exists, skipping" % destination_file)
+    for display_id, file_name_root in downloaded_videos:
+        in_file_name = display_id + '.mkv'
+        out_file_suffix = f'_{display_id}.mp4'
+        existing_file = next(glob.iglob('*' + out_file_suffix), None)
+        if existing_file:
+            print("%s already exists, skipping" % existing_file)
             continue
+
+        destination_file = "{:.2f}x_".format(
+            SPEED_FACTOR) + file_name_root + out_file_suffix
 
         new_height = get_height(in_file_name)
 
@@ -216,7 +226,7 @@ def main():
             v1 = v1.filter('pad', MAX_WIDTH, MAX_HEIGHT, -1, -1)
         a1 = a1.filter('atempo', SPEED_FACTOR)
 
-        temp_file_name = file_name_root + ".tmp"
+        temp_file_name = display_id + ".tmp"
 
         output_framerate = min(SPEED_FACTOR * get_frame_rate(in_file_name),
                                MAX_OUTPUT_FRAME_RATE)
