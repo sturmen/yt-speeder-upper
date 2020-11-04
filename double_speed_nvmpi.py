@@ -2,6 +2,7 @@
 ''' Formatted with yapf '''
 
 import ffmpeg
+from filelock import Timeout, FileLock
 import json
 import sys
 import os
@@ -12,13 +13,16 @@ from datetime import datetime
 
 MAX_RETRIES = 5
 MAX_HEIGHT = 1080
-MAX_WIDTH = 2400
+MAX_WIDTH = 1920
 MAX_INPUT_FRAME_RATE = 60
 MAX_OUTPUT_FRAME_RATE = 60
 FILE_NAME_TEMPLATE = "%(uploader)s_%(title)s"
 SPEED_FACTOR = 2.50
 
 BLOCKED_CATEGORIES = ["sponsor", "intro", "outro"]
+
+lock_path = "ytdl.lock"
+lock = FileLock(lock_path, timeout=0)
 
 
 def get_height(filename):
@@ -206,7 +210,7 @@ def main():
         v1 = v1.setpts("PTS/%s" % SPEED_FACTOR)
         if (new_height > MAX_HEIGHT):
             v1 = v1.filter('scale',
-                           -2,
+                           MAX_WIDTH,
                            MAX_HEIGHT,
                            force_original_aspect_ratio="decrease")
         a1 = a1.filter('atempo', SPEED_FACTOR)
@@ -251,4 +255,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    with lock:
+        main()
