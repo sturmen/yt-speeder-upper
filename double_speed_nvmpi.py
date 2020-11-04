@@ -213,6 +213,7 @@ def main():
                            MAX_WIDTH,
                            MAX_HEIGHT,
                            force_original_aspect_ratio="decrease")
+            v1 = v1.filter('pad', MAX_WIDTH, MAX_HEIGHT, -1, -1)
         a1 = a1.filter('atempo', SPEED_FACTOR)
 
         temp_file_name = file_name_root + ".tmp"
