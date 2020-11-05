@@ -24,7 +24,7 @@ SPEED_FACTOR = 2.50
 
 BLOCKED_CATEGORIES = ["sponsor", "intro", "outro"]
 
-allowed_chars_pattern = re.compile('[\W_]+')
+allowed_chars_pattern = re.compile('[^\w\s-]+')
 
 download_lock_path = "ytdl_download.lock"
 download_lock = FileLock(download_lock_path, timeout=1)
@@ -105,8 +105,8 @@ def download_videos(videos, opts, retries_remaining):
 
 def parse_video_info_for_filename(entry):
     video_id = entry['id']
-    video_title = entry['title'][:20]
-    uploader = entry['uploader'][:8]
+    video_title = entry['title']
+    uploader = entry['uploader']
     filename = allowed_chars_pattern.sub('', f"{uploader} - {video_title}")
     return video_id, filename
 
