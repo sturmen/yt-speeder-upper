@@ -7,6 +7,8 @@ import glob
 import json
 import sys
 import os
+import re
+import string
 from pprint import pprint
 import requests
 import youtube_dl
@@ -22,8 +24,12 @@ SPEED_FACTOR = 2.50
 
 BLOCKED_CATEGORIES = ["sponsor", "intro", "outro"]
 
-lock_path = "ytdl.lock"
-lock = FileLock(lock_path, timeout=0)
+allowed_chars_pattern = re.compile('[\W_]+')
+
+download_lock_path = "ytdl_download.lock"
+download_lock = FileLock(download_lock_path, timeout=1)
+encode_lock_path = "ytdl_encode.lock"
+encode_lock = FileLock(encode_lock_path, timeout=1)
 
 
 def get_height(filename):
@@ -99,10 +105,9 @@ def download_videos(videos, opts, retries_remaining):
 
 def parse_video_info_for_filename(entry):
     video_id = entry['id']
-    video_title = entry['title']
-    uploader = entry['uploader']
-    filename = f"{uploader}?-?{video_title}".encode(
-        'ascii', 'replace').decode().replace('?', '_')
+    video_title = entry['title'][:20]
+    uploader = entry['uploader'][:8]
+    filename = allowed_chars_pattern.sub('', f"{uploader} - {video_title}")
     return video_id, filename
 
 
@@ -120,7 +125,7 @@ def add_sponsor_video_filter(video_stream, audio_stream, video_id,
     sponsored_segment_response = fetch_sponsored_bits(video_id)
 
     if sponsored_segment_response == 'Not Found':
-        print("No sponsored segments for this one.")
+        print(f"No sponsored segments for {video_id}.")
         return video_stream, audio_stream
     else:
         segments_to_keep = find_worthwhile_clips(
@@ -183,30 +188,22 @@ def find_worthwhile_clips(segments, total_duration):
     return output
 
 
-def main():
-    ydl_opts = {
-        'format': 'bestvideo[fps<=%(fps)s]+bestaudio/best' % {
-            "fps": MAX_INPUT_FRAME_RATE
-        },
-        'outtmpl': FILE_NAME_TEMPLATE,
-        'restrictfilenames': True,
-        'merge_output_format': 'mkv'
-    }
-
-    downloaded_videos = download_videos(sys.argv[1:], ydl_opts, MAX_RETRIES)
-
+def encode_videos(downloaded_videos):
     encoded_video_count = 0
+
+    existing_mkv_files = glob.glob('*.mkv')
 
     for display_id, file_name_root in downloaded_videos:
         in_file_name = display_id + '.mkv'
+        if in_file_name in existing_mkv_files:
+            existing_mkv_files.remove(in_file_name)
         out_file_suffix = f'_{display_id}.mp4'
         existing_file = next(glob.iglob('*' + out_file_suffix), None)
         if existing_file:
             print("%s already exists, skipping" % existing_file)
             continue
 
-        destination_file = "{:.2f}x_".format(
-            SPEED_FACTOR) + file_name_root + out_file_suffix
+        destination_file = file_name_root + out_file_suffix
 
         new_height = get_height(in_file_name)
 
@@ -233,38 +230,77 @@ def main():
         start = datetime.now()
         print("%s encoding %s" %
               (start.strftime("[%d/%m/%Y %H:%M:%S]"), file_name_root))
-        ffmpeg.output(v1,
-                      a1,
-                      temp_file_name,
-                      format='mp4',
-                      pix_fmt='yuv420p',
-                      vcodec='hevc_nvmpi',
-                      video_bitrate="8M",
-                      preset="slow",
-                      rc="vbr",
-                      vtag="hvc1",
-                      acodec='aac',
-                      audio_bitrate="128k",
-                      r=output_framerate,
-                      **{
-                          'metadata:s:a:0': 'language=eng'
-                      }).global_args('-hide_banner').run(overwrite_output=True)
-        encoded_video_count += 1
-        end = datetime.now()
-        duration = end - start
-        if os.path.isfile(temp_file_name):
-            print("%s encoding %s completed in %s" %
-                  (end.strftime("[%d/%m/%Y %H:%M:%S]"), file_name_root,
-                   duration))
-        os.rename(temp_file_name, destination_file)
-        if os.path.isfile(destination_file):
-            print("%s rename successful" % destination_file)
-        else:
-            print("%s rename failed" % destination_file)
-            print(temp_file_name + " still exists: " +
-                  os.path.isfile(temp_file_name))
+        try:
+            out, err = ffmpeg.output(v1,
+                                     a1,
+                                     temp_file_name,
+                                     format='mp4',
+                                     pix_fmt='yuv420p',
+                                     vcodec='hevc_nvmpi',
+                                     video_bitrate="8M",
+                                     preset="slow",
+                                     rc="vbr",
+                                     vtag="hvc1",
+                                     acodec='aac',
+                                     audio_bitrate="128k",
+                                     r=output_framerate,
+                                     **{
+                                         'metadata:s:a:0': 'language=eng'
+                                     }).global_args('-hide_banner').run(
+                                         overwrite_output=True, quiet=True)
+            print(out)
+            print(err)
+            encoded_video_count += 1
+            end = datetime.now()
+            duration = end - start
+            if os.path.isfile(temp_file_name):
+                print("%s encoding %s completed in %s" %
+                      (end.strftime("[%d/%m/%Y %H:%M:%S]"), file_name_root,
+                       duration))
+            os.rename(temp_file_name, destination_file)
+            if os.path.isfile(destination_file):
+                print("%s rename successful" % destination_file)
+            else:
+                print("%s rename failed" % destination_file)
+                print(temp_file_name + " still exists: " +
+                      os.path.isfile(temp_file_name))
+        except ffmpeg._run.Error as err:
+            print("Error running ffmpeg!")
+            raise
+
+    for outdated_file in existing_mkv_files:
+        os.remove(outdated_file)
+
+
+def main():
+    ydl_opts = {
+        'format': 'bestvideo[fps<=%(fps)s]+bestaudio/best' % {
+            "fps": MAX_INPUT_FRAME_RATE
+        },
+        'outtmpl': FILE_NAME_TEMPLATE,
+        'restrictfilenames': True,
+        'merge_output_format': 'mkv'
+    }
+
+    downloaded_videos = []
+    timestamp = datetime.now().strftime("[%d/%m/%Y %H:%M:%S]")
+    try:
+        with download_lock:
+            print(f"{timestamp} Got download lock.")
+            downloaded_videos = download_videos(sys.argv[1:], ydl_opts,
+                                                MAX_RETRIES)
+    except Timeout:
+        print(f"{timestamp} Could not get downloading lock.")
+
+    timestamp = datetime.now().strftime("[%d/%m/%Y %H:%M:%S]")
+    try:
+        with encode_lock:
+            print(f"{timestamp} Got encoding lock.")
+            encode_videos(downloaded_videos)
+    except Timeout:
+        timestamp = datetime.now().strftime("[%d/%m/%Y %H:%M:%S]")
+        print(f"{timestamp} Could not get encoding lock.")
 
 
 if __name__ == "__main__":
-    with lock:
-        main()
+    main()
