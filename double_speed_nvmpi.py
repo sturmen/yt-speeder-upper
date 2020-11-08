@@ -34,7 +34,7 @@ encode_lock = FileLock(encode_lock_path, timeout=1)
 
 def get_height(filename):
     try:
-        probe = ffmpeg.probe(filename)
+        probe = ffmpeg.probe("./" + filename)
         video_stream = next((stream for stream in probe['streams']
                              if stream['codec_type'] == 'video'), None)
         height = int(video_stream['height'])
@@ -237,7 +237,7 @@ def encode_videos(downloaded_videos):
                                      format='mp4',
                                      pix_fmt='yuv420p',
                                      vcodec='hevc_nvmpi',
-                                     video_bitrate="8M",
+                                     video_bitrate="6M",
                                      preset="slow",
                                      rc="vbr",
                                      vtag="hvc1",
