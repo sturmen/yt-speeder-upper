@@ -45,7 +45,7 @@ def get_height(filename):
 
 
 def get_frame_rate(filename):
-    probe = ffmpeg.probe(filename)
+    probe = ffmpeg.probe("./" + filename)
     video_stream = next(
         (stream
          for stream in probe['streams'] if stream['codec_type'] == 'video'),
@@ -56,7 +56,7 @@ def get_frame_rate(filename):
 
 def get_total_duration(filename):
     try:
-        probe = ffmpeg.probe(filename)
+        probe = ffmpeg.probe("./" + filename)
         video_stream = next((stream for stream in probe['streams']
                              if stream['codec_type'] == 'video'), None)
         return get_sec(video_stream['tags']['DURATION'])
@@ -207,7 +207,7 @@ def encode_videos(downloaded_videos):
 
         new_height = get_height(in_file_name)
 
-        inputObject = ffmpeg.input(in_file_name)
+        inputObject = ffmpeg.input("./" + in_file_name)
 
         total_length = get_total_duration(in_file_name)
 
@@ -223,7 +223,7 @@ def encode_videos(downloaded_videos):
             v1 = v1.filter('pad', MAX_WIDTH, MAX_HEIGHT, -1, -1)
         a1 = a1.filter('atempo', SPEED_FACTOR)
 
-        temp_file_name = display_id + ".tmp"
+        temp_file_name = "./" + display_id + ".tmp"
 
         output_framerate = min(SPEED_FACTOR * get_frame_rate(in_file_name),
                                MAX_OUTPUT_FRAME_RATE)
