@@ -11,7 +11,7 @@ import re
 import string
 from pprint import pprint
 import requests
-import youtube_dl
+import youtube_dlc
 from datetime import datetime
 
 MAX_RETRIES = 5
@@ -77,7 +77,7 @@ def download_videos(videos, opts, retries_remaining):
         print('no more retries left. aborting.')
         return result_list
 
-    with youtube_dl.YoutubeDL(opts) as ydl:
+    with youtube_dlc.YoutubeDL(opts) as ydl:
         for url in videos:
             try:
                 extracted_info = ydl.extract_info(url)
