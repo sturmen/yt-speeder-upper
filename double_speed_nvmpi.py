@@ -257,7 +257,17 @@ def encode_videos(downloaded_videos):
                 print("%s encoding %s completed in %s" %
                       (end.strftime("[%d/%m/%Y %H:%M:%S]"), file_name_root,
                        duration))
-            os.rename(temp_file_name, destination_file)
+                ffmpeg.output(
+                    ffmpeg.input(temp_file_name),
+                    destination_file,
+                    vcodec="copy",
+                    acodec="copy",
+                    vtag="hvc1",
+                    format='mp4',
+                    **{
+                        'metadata:s:a:0': 'language=eng',
+                    }).global_args('-hide_banner').run(overwrite_output=True)
+                os.remove(temp_file_name)
             if os.path.isfile(destination_file):
                 print("%s rename successful" % destination_file)
             else:
