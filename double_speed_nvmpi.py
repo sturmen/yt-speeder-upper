@@ -237,7 +237,7 @@ def encode_videos(downloaded_videos):
                                      format='mp4',
                                      pix_fmt='yuv420p',
                                      vcodec='hevc_nvmpi',
-                                     video_bitrate="6M",
+                                     video_bitrate="8M",
                                      preset="slow",
                                      rc="vbr",
                                      vtag="hvc1",
