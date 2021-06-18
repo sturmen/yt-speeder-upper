@@ -15,10 +15,10 @@ import youtube_dl
 from datetime import datetime
 
 MAX_RETRIES = 5
-MAX_HEIGHT = 1080
-MAX_WIDTH = 1920
+MAX_HEIGHT = 1440
+MAX_WIDTH = 2560
 MAX_INPUT_FRAME_RATE = 60
-MAX_OUTPUT_FRAME_RATE = 60
+MAX_OUTPUT_FRAME_RATE = 120
 FILE_NAME_TEMPLATE = "%(id)s"
 SPEED_FACTOR = 2.50
 
@@ -284,7 +284,7 @@ def encode_videos(downloaded_videos):
 
 def main():
     ydl_opts = {
-        'format': 'bestvideo[fps<=%(fps)s]+bestaudio/best' % {
+        'format': 'bestvideo[fps<=%(fps)s]+251/best' % {
             "fps": MAX_INPUT_FRAME_RATE
         },
         'outtmpl': FILE_NAME_TEMPLATE,
