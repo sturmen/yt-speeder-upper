@@ -237,11 +237,7 @@ def encode_videos(downloaded_videos):
                                      format='mp4',
                                      pix_fmt='yuv420p',
                                      vcodec='hevc_nvmpi',
-<<<<<<< HEAD
                                      video_bitrate="8M",
-=======
-                                     video_bitrate="6M",
->>>>>>> d93dcaababb7c7505a5dd434a1b13a03e31a9a27
                                      preset="slow",
                                      rc="vbr",
                                      vtag="hvc1",
@@ -288,11 +284,7 @@ def encode_videos(downloaded_videos):
 
 def main():
     ydl_opts = {
-<<<<<<< HEAD
         'format': 'bestvideo[fps<=%(fps)s]+251/best' % {
-=======
-        'format': 'bestvideo[fps<=%(fps)s]+bestaudio/best' % {
->>>>>>> d93dcaababb7c7505a5dd434a1b13a03e31a9a27
             "fps": MAX_INPUT_FRAME_RATE
         },
         'outtmpl': FILE_NAME_TEMPLATE,
