@@ -15,10 +15,10 @@ import youtube_dl
 from datetime import datetime
 
 MAX_RETRIES = 5
-MAX_HEIGHT = 1440
-MAX_WIDTH = 2560
+MAX_HEIGHT = 1080
+MAX_WIDTH = 1920
 MAX_INPUT_FRAME_RATE = 60
-MAX_OUTPUT_FRAME_RATE = 120
+MAX_OUTPUT_FRAME_RATE = 60
 FILE_NAME_TEMPLATE = "%(id)s"
 SPEED_FACTOR = 2.50
 
@@ -300,7 +300,8 @@ def main():
             downloaded_videos = download_videos(sys.argv[1:], ydl_opts,
                                                 MAX_RETRIES)
     except Timeout:
-        print(f"{timestamp} Could not get downloading lock.")
+        print(f"{timestamp} Could not get downloading lock. Exiting early.")
+        sys.exit()
 
     timestamp = datetime.now().strftime("[%d/%m/%Y %H:%M:%S]")
     try:
