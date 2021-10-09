@@ -8,17 +8,16 @@ import json
 import sys
 import os
 import re
-import string
 from pprint import pprint
 import requests
-import youtube_dl
+import yt_dlp
 from datetime import datetime
 
 MAX_RETRIES = 5
-MAX_HEIGHT = 1080
-MAX_WIDTH = 1920
+MAX_HEIGHT = 1440
+MAX_WIDTH = 2560
 MAX_INPUT_FRAME_RATE = 60
-MAX_OUTPUT_FRAME_RATE = 60
+MAX_OUTPUT_FRAME_RATE = 120
 FILE_NAME_TEMPLATE = "%(id)s"
 SPEED_FACTOR = 2.50
 
@@ -77,7 +76,7 @@ def download_videos(videos, opts, retries_remaining):
         print('no more retries left. aborting.')
         return result_list
 
-    with youtube_dl.YoutubeDL(opts) as ydl:
+    with yt_dlp.YoutubeDL(opts) as ydl:
         for url in videos:
             try:
                 extracted_info = ydl.extract_info(url)
