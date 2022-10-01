@@ -1,4 +1,4 @@
-#! python3
+#! python
 ''' Formatted with yapf '''
 
 import ffmpeg
@@ -14,8 +14,8 @@ import yt_dlp
 from datetime import datetime
 
 MAX_RETRIES = 5
-MAX_HEIGHT = 1440
-MAX_WIDTH = 2560
+MAX_HEIGHT = 1080
+MAX_WIDTH = 1920
 MAX_INPUT_FRAME_RATE = 60
 MAX_OUTPUT_FRAME_RATE = 120
 FILE_NAME_TEMPLATE = "%(id)s"
@@ -228,7 +228,7 @@ def encode_videos(downloaded_videos):
                                MAX_OUTPUT_FRAME_RATE)
         start = datetime.now()
         print("%s encoding %s" %
-              (start.strftime("[%d/%m/%Y %H:%M:%S]"), file_name_root))
+              (start.strftime("[%Y-%m-%d %H:%M:%S]"), file_name_root))
         try:
             out, err = ffmpeg.output(v1,
                                      a1,
@@ -254,7 +254,7 @@ def encode_videos(downloaded_videos):
             duration = end - start
             if os.path.isfile(temp_file_name):
                 print("%s encoding %s completed in %s" %
-                      (end.strftime("[%d/%m/%Y %H:%M:%S]"), file_name_root,
+                      (end.strftime("[%Y-%m-%d %H:%M:%S]"), file_name_root,
                        duration))
                 ffmpeg.output(
                     ffmpeg.input(temp_file_name),
@@ -292,7 +292,7 @@ def main():
     }
 
     downloaded_videos = []
-    timestamp = datetime.now().strftime("[%d/%m/%Y %H:%M:%S]")
+    timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
     try:
         with download_lock:
             print(f"{timestamp} Got download lock.")
@@ -302,13 +302,13 @@ def main():
         print(f"{timestamp} Could not get downloading lock. Exiting early.")
         sys.exit()
 
-    timestamp = datetime.now().strftime("[%d/%m/%Y %H:%M:%S]")
+    timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
     try:
         with encode_lock:
             print(f"{timestamp} Got encoding lock.")
             encode_videos(downloaded_videos)
     except Timeout:
-        timestamp = datetime.now().strftime("[%d/%m/%Y %H:%M:%S]")
+        timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
         print(f"{timestamp} Could not get encoding lock.")
 
 
