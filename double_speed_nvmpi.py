@@ -17,11 +17,11 @@ MAX_RETRIES = 5
 MAX_HEIGHT = 1080
 MAX_WIDTH = 1920
 MAX_INPUT_FRAME_RATE = 60
-MAX_OUTPUT_FRAME_RATE = 120
+MAX_OUTPUT_FRAME_RATE = 75
 FILE_NAME_TEMPLATE = "%(id)s"
 SPEED_FACTOR = 2.50
 
-BLOCKED_CATEGORIES = ["sponsor", "intro", "outro"]
+BLOCKED_CATEGORIES = ["sponsor", "selfpromo"]
 
 allowed_chars_pattern = re.compile('[^\w\s-]+')
 
@@ -127,16 +127,21 @@ def add_sponsor_video_filter(video_stream, audio_stream, video_id,
         print(f"No sponsored segments for {video_id}.")
         return video_stream, audio_stream
     else:
-        segments_to_keep = find_worthwhile_clips(
-            json.loads(sponsored_segment_response), total_duration)
-        time_saved = int(
-            round(total_duration - sum([x[1] - x[0]
-                                        for x in segments_to_keep])))
-        print(
-            f"Keeping {segments_to_keep} for {video_id}, saving approximately {time_saved} seconds"
-        )
-        return trim_video(video_stream, segments_to_keep), trim_audio(
-            audio_stream, segments_to_keep)
+        try:
+            segments_to_keep = find_worthwhile_clips(
+                json.loads(sponsored_segment_response), total_duration)
+            time_saved = int(
+                round(total_duration - sum([x[1] - x[0]
+                                            for x in segments_to_keep])))
+            print(
+                f"Keeping {segments_to_keep} for {video_id}, saving approximately {time_saved} seconds"
+            )
+            return trim_video(video_stream, segments_to_keep), trim_audio(
+                audio_stream, segments_to_keep)
+        except json.decoder.JSONDecodeError:
+            print(
+                f"JSON decoding error for {video_id}, continuing encode without SponsorBlock.")
+            return video_stream, audio_stream
 
 
 def trim_video(video_stream, segments_to_keep):
@@ -237,7 +242,6 @@ def encode_videos(downloaded_videos):
                                      pix_fmt='yuv420p',
                                      vcodec='hevc_nvmpi',
                                      video_bitrate="8M",
-                                     preset="slow",
                                      rc="vbr",
                                      vtag="hvc1",
                                      acodec='aac',
