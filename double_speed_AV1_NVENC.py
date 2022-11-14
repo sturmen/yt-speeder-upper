@@ -14,8 +14,8 @@ import yt_dlp
 from datetime import datetime
 
 MAX_RETRIES = 5
-MAX_HEIGHT = 1328
-MAX_WIDTH = 2360
+MAX_HEIGHT = 1080
+MAX_WIDTH = 1920
 MAX_INPUT_FRAME_RATE = 60
 MAX_OUTPUT_FRAME_RATE = 60
 FILE_NAME_TEMPLATE = "%(id)s"
@@ -199,7 +199,7 @@ def encode_videos(downloaded_videos):
         in_file_name = display_id + '.mkv'
         if in_file_name in existing_mkv_files:
             existing_mkv_files.remove(in_file_name)
-        out_file_suffix = f'_{display_id}.mp4'
+        out_file_suffix = f'_{display_id}.webm'
         existing_file = next(glob.iglob('*' + out_file_suffix), None)
         if existing_file:
             print("%s already exists, skipping" % existing_file)
@@ -222,6 +222,7 @@ def encode_videos(downloaded_videos):
                            MAX_WIDTH,
                            MAX_HEIGHT,
                            force_original_aspect_ratio="decrease")
+            v1 = v1.filter('pad', MAX_WIDTH, MAX_HEIGHT, -1, -1)
         a1 = a1.filter('atempo', SPEED_FACTOR)
 
         temp_file_name = "./" + display_id + ".tmp"
@@ -235,19 +236,19 @@ def encode_videos(downloaded_videos):
             out, err = ffmpeg.output(v1,
                                      a1,
                                      temp_file_name,
-                                     format='mp4',
-                                     pix_fmt='p010le',
-                                     vcodec='hevc_nvenc',
-                                     g="600",
+                                     format='webm',
+                                     pix_fmt='yuv420p10le',
+                                     vcodec='av1_nvenc',
+                                     multipass='qres',
+                                     video_bitrate='0',
                                      preset='slow',
-                                     cq="20",
+                                     cq="28",
                                      vprofile='main10',
                                      spatial_aq='1',
                                      temporal_aq='1',
                                      rc='vbr',
-                                     vtag="hvc1",
-                                     acodec='aac',
-                                     audio_bitrate="128k",
+                                     acodec='libopus',
+                                     audio_bitrate="96k",
                                      r=output_framerate).global_args('-hide_banner').run(
                 overwrite_output=True)
             print(out)
@@ -263,9 +264,7 @@ def encode_videos(downloaded_videos):
                     destination_file,
                     vcodec="copy",
                     acodec="copy",
-                    vtag="hvc1",
-                    format='mp4',
-                    movflags='+faststart',
+                    format='webm',
                     **{
                         'metadata:s:a:0': 'language=eng',
                     }).global_args('-hide_banner').run(overwrite_output=True)
