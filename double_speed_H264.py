@@ -78,9 +78,7 @@ def calculate_gop_size(framerate):
 
 def main():
     ydl_opts = {
-        'format': 'bestvideo[fps<=%(fps)s]+bestaudio/best' % {
-            "fps": MAX_INPUT_FRAME_RATE
-        },
+        'format': 'bestvideo+bestaudio/best',
         'outtmpl': FILE_NAME_TEMPLATE,
         'restrictfilenames': True,
         'merge_output_format': 'mkv'

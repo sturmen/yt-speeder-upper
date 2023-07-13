@@ -288,9 +288,7 @@ def encode_videos(downloaded_videos):
 
 def main():
     ydl_opts = {
-        'format': 'bestvideo[fps<=%(fps)s]+251/best' % {
-            "fps": MAX_INPUT_FRAME_RATE
-        },
+        'format': 'bestvideo+bestaudio/best',
         'outtmpl': FILE_NAME_TEMPLATE,
         'restrictfilenames': True,
         'merge_output_format': 'mkv'
