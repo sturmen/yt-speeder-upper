@@ -101,15 +101,50 @@ def download_videos(videos, opts, retries_remaining):
 
     return result_list
 
-
 def parse_video_info_for_filename(entry):
+    """ Get metadata from the response """
     video_id = entry['id']
-    video_title = entry['title']
+    video_title = fetch_dearrowed_title(video_id)
+    if video_title is None:
+        video_title = entry['title']
     uploader = entry['uploader']
     filename = allowed_chars_pattern.sub('', f"{uploader} - {video_title}")
     return video_id, filename
 
+def fetch_dearrowed_title(video_id):
+    """ Fetches a new title from DeArrow that is potentially less  clickbait-y """
+    payload = f'videoID={video_id}'
+    r = requests.get('https://sponsor.ajay.app/api/branding',
+                     params=payload,
+                     timeout=10)
+    data = json.loads(r.text)
+   
+    # Initialize max_votes to -1 and most_voted_title to None
+    max_votes = -1
+    most_voted_title = None
+   
+    # Iterate over all titles in the data
+    for item in data['titles']:
+        # Check if current title has more votes than max_votes
+        if item['votes'] > max_votes:
+            # If so, update max_votes and most_voted_title
+            max_votes = item['votes']
+            most_voted_title = item['title']    
 
+    if most_voted_title is not None:
+        print(f'Setting {most_voted_title} as title for {video_id}')
+    else:
+        print(f'No DeArrow title found for {video_id}')
+    return most_voted_title
+
+def fetch_sponsored_bits(video_id):
+    categories_string = str(BLOCKED_CATEGORIES).replace("'", '"')
+    payload = f'videoID={video_id}&categories={categories_string}'
+    r = requests.get('https://sponsor.ajay.app/api/skipSegments',
+                     params=payload,
+                     timeout=10)
+    output = r.text
+    return output
 def fetch_sponsored_bits(video_id):
     categories_string = str(BLOCKED_CATEGORIES).replace("'", '"')
     payload = f'videoID={video_id}&categories={categories_string}'

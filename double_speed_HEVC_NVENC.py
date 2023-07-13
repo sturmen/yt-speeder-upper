@@ -1,14 +1,16 @@
 #! python
 ''' Formatted with yapf '''
 
-import ffmpeg
-from filelock import Timeout, FileLock
-import glob
+from pprint import pprint
 import json
 import sys
 import os
 import re
-from pprint import pprint
+import glob
+import ffmpeg
+
+from filelock import Timeout, FileLock
+
 import requests
 import yt_dlp
 from datetime import datetime
@@ -32,18 +34,20 @@ encode_lock = FileLock(encode_lock_path, timeout=1)
 
 
 def get_height(filename):
+    """ Calculate the height of the video """
     try:
         probe = ffmpeg.probe("./" + filename)
         video_stream = next((stream for stream in probe['streams']
                              if stream['codec_type'] == 'video'), None)
         height = int(video_stream['height'])
         return height
-    except ffmpeg.Error as e:
-        print(e.stderr)
-        raise e
+    except ffmpeg.Error as err:
+        print(err.stderr)
+        raise err
 
 
 def get_frame_rate(filename):
+    """ Calculates the total framerate so we can use a framerate less than MAX_FRAMERATE """
     probe = ffmpeg.probe("./" + filename)
     video_stream = next(
         (stream
@@ -54,14 +58,15 @@ def get_frame_rate(filename):
 
 
 def get_total_duration(filename):
+    """ Calculates the total duration, for logging purposes. """
     try:
         probe = ffmpeg.probe("./" + filename)
         video_stream = next((stream for stream in probe['streams']
                              if stream['codec_type'] == 'video'), None)
         return get_sec(video_stream['tags']['DURATION'])
-    except ffmpeg.Error as e:
-        print(e.stderr)
-        raise e
+    except ffmpeg.Error as err:
+        print(err.stderr)
+        raise err
 
 
 def get_sec(time_str):
@@ -71,6 +76,7 @@ def get_sec(time_str):
 
 
 def download_videos(videos, opts, retries_remaining):
+    """ Downloads the videos and also fetches their titles """
     result_list = []
     if retries_remaining < 1:
         print('no more retries left. aborting.')
@@ -101,26 +107,54 @@ def download_videos(videos, opts, retries_remaining):
 
     return result_list
 
-
 def parse_video_info_for_filename(entry):
+    """ Get metadata from the response """
     video_id = entry['id']
-    video_title = entry['title']
+    video_title = fetch_dearrowed_title(video_id)
+    if video_title is None:
+        video_title = entry['title']
     uploader = entry['uploader']
     filename = allowed_chars_pattern.sub('', f"{uploader} - {video_title}")
     return video_id, filename
 
+def fetch_dearrowed_title(video_id):
+    """ Fetches a new title from DeArrow that is potentially less  clickbait-y """
+    payload = f'videoID={video_id}'
+    r = requests.get('https://sponsor.ajay.app/api/branding',
+                     params=payload,
+                     timeout=10)
+    data = json.loads(r.text)
+   
+    # Initialize max_votes to -1 and most_voted_title to None
+    max_votes = -1
+    most_voted_title = None
+   
+    # Iterate over all titles in the data
+    for item in data['titles']:
+        # Check if current title has more votes than max_votes
+        if item['votes'] > max_votes:
+            # If so, update max_votes and most_voted_title
+            max_votes = item['votes']
+            most_voted_title = item['title']    
+
+    if most_voted_title is not None:
+        print(f'Setting {most_voted_title} as title for {video_id}')
+    else:
+        print(f'No DeArrow title found for {video_id}')
+    return most_voted_title
 
 def fetch_sponsored_bits(video_id):
     categories_string = str(BLOCKED_CATEGORIES).replace("'", '"')
     payload = f'videoID={video_id}&categories={categories_string}'
-    r = requests.get(f'https://sponsor.ajay.app/api/skipSegments',
-                     params=payload)
+    r = requests.get('https://sponsor.ajay.app/api/skipSegments',
+                     params=payload,
+                     timeout=10)
     output = r.text
     return output
 
-
 def add_sponsor_video_filter(video_stream, audio_stream, video_id,
                              total_duration):
+    """ Add an FFMPEG filter that slices out the sponsored segments """
     sponsored_segment_response = fetch_sponsored_bits(video_id)
 
     if sponsored_segment_response == 'Not Found':
@@ -278,7 +312,7 @@ def encode_videos(downloaded_videos):
                       os.path.isfile(temp_file_name))
         except ffmpeg._run.Error as err:
             print("Error running ffmpeg!")
-            raise
+            raise err
 
     for outdated_file in existing_mkv_files:
         os.remove(outdated_file)
