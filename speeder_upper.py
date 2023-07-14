@@ -154,21 +154,16 @@ def codec_av1(v1, a1, tmp_file, framerate):
         tmp_file,
         format='mp4',
         pix_fmt='yuv420p10le',
-        vcodec='libaom-av1',
-        multipass='qres',
-        video_bitrate='0',
-        preset='slow',
-        cq="28",
-        vprofile='main10',
-        spatial_aq='1',
-        temporal_aq='1',
-        rc='vbr',
+        vcodec='libsvtav1',
+        preset=6,
+        crf=34,
         acodec="libfdk_aac",
         audio_bitrate="128k",
         movflags="+faststart",
         r=framerate,
         **{
             "metadata:s:a:0": "language=eng",
+            'svtav1-params': 'fast-decode=1:enable-overlays=1:lookahead=0:scd=1:tune=1',
         })
 
 
