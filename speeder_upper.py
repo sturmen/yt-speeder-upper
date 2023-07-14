@@ -13,7 +13,7 @@ import requests
 import ffmpeg
 
 from filelock import Timeout, FileLock
-
+from pathlib import Path
 
 MAX_RETRIES = 5
 MAX_HEIGHT = 1328
@@ -441,9 +441,11 @@ def encode_videos(downloaded_videos, codec_label):
                 print(
                     temp_file_name + " still exists: " + os.path.isfile(temp_file_name)
                 )
-        except ffmpeg._run.Error as err:
-            print("Error running ffmpeg!")
-            raise err
+        except ffmpeg._run.Error:
+            print(f"Error running ffmpeg on {out_file_suffix}!")
+            os.remove(temp_file_name)
+            Path(f'ERROR_ENCODING_FILE{out_file_suffix}').touch()
+            continue
 
     for outdated_file in existing_mkv_files:
         os.remove(outdated_file)
