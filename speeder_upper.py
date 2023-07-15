@@ -253,7 +253,7 @@ def parse_video_info_for_filename(entry, dearrow_enabled):
     video_title = entry["title"]
     if dearrow_enabled:
         dearrow_title = fetch_dearrowed_title(video_id)
-        if dearrow_enabled is not None:
+        if dearrow_title is not None:
             video_title = dearrow_title
     uploader = entry["uploader"]
     filename = allowed_chars_pattern.sub("", f"{uploader} - {video_title}")
