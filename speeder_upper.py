@@ -213,7 +213,7 @@ def get_sec(time_str):
     return int(h) * 3600 + int(m) * 60 + float(s)
 
 
-def download_videos(videos, opts, retries_remaining):
+def download_videos(videos, opts, dearrow_enabled, retries_remaining):
     """Downloads the videos and also fetches their titles"""
     result_list = []
     if retries_remaining < 1:
@@ -230,9 +230,9 @@ def download_videos(videos, opts, retries_remaining):
                     and extracted_info["_type"] == "playlist"
                 ):
                     for entry in extracted_info["entries"]:
-                        result_list.append(parse_video_info_for_filename(entry))
+                        result_list.append(parse_video_info_for_filename(entry, dearrow_enabled))
                 else:
-                    result_list.append(parse_video_info_for_filename(extracted_info))
+                    result_list.append(parse_video_info_for_filename(extracted_info, dearrow_enabled))
             except KeyboardInterrupt:
                 print("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 print("keyboard interrupt, aborting")
@@ -247,12 +247,14 @@ def download_videos(videos, opts, retries_remaining):
     return result_list
 
 
-def parse_video_info_for_filename(entry):
+def parse_video_info_for_filename(entry, dearrow_enabled):
     """Get metadata from the response"""
     video_id = entry["id"]
-    video_title = fetch_dearrowed_title(video_id)
-    if video_title is None:
-        video_title = entry["title"]
+    video_title = entry["title"]
+    if dearrow_enabled:
+        dearrow_title = fetch_dearrowed_title(video_id)
+        if dearrow_enabled is not None:
+            video_title = dearrow_title
     uploader = entry["uploader"]
     filename = allowed_chars_pattern.sub("", f"{uploader} - {video_title}")
     return video_id, filename
@@ -443,10 +445,10 @@ def encode_videos(downloaded_videos, codec_label):
         os.remove(outdated_file)
 
 
-def main(urls, codec="x265"):
+def main(urls, codec, dearrow_enabled):
     
     if codec not in CODECS:
-        print("Invalid codec specified. Must be one of:")
+        print(f"Invalid codec {codec} specified. Must be one of:")
         for valid_codec in CODECS:
             print(f"\t{valid_codec}")
         exit()
@@ -463,7 +465,7 @@ def main(urls, codec="x265"):
     try:
         with download_lock:
             print(f"{timestamp} Got download lock.")
-            downloaded_videos = download_videos(urls, ydl_opts, MAX_RETRIES)
+            downloaded_videos = download_videos(urls, ydl_opts, dearrow_enabled, MAX_RETRIES)
     except Timeout:
         print(f"{timestamp} Could not get downloading lock. Exiting early.")
         sys.exit()
@@ -480,7 +482,8 @@ def main(urls, codec="x265"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--codec', help='Video encoder to use')
+    parser.add_argument('--codec', help='Video encoder to use', default='x265')
+    parser.add_argument('--dearrow', help='Whether to attempt to replace the original titles with crowdsourced titles', default=True)
     parser.add_argument("urls", nargs='*', help="yt-dlp compatible URLs or identifiers")
     args = parser.parse_args()
-    main(args.urls, args.codec)
+    main(args.urls, args.codec, args.dearrow)
