@@ -255,6 +255,7 @@ def parse_video_info_for_filename(entry, dearrow_enabled):
         dearrow_title = fetch_dearrowed_title(video_id)
         if dearrow_enabled is not None:
             video_title = dearrow_title
+    print(f'Setting "{video_title}" as title for {video_id}')
     uploader = entry["uploader"]
     filename = allowed_chars_pattern.sub("", f"{uploader} - {video_title}")
     return video_id, filename
@@ -280,9 +281,7 @@ def fetch_dearrowed_title(video_id):
             max_votes = item["votes"]
             most_voted_title = item["title"]
 
-    if most_voted_title is not None:
-        print(f"Setting {most_voted_title} as title for {video_id}")
-    else:
+    if most_voted_title is None:
         print(f"No DeArrow title found for {video_id}")
     return most_voted_title
 
@@ -489,8 +488,8 @@ def main(urls, codec, dearrow_enabled):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--codec', help='Video encoder to use', default='x265')
-    parser.add_argument('--dearrow', help='Whether to attempt to replace the original titles with crowdsourced titles', default=True)
+    parser.add_argument('--codec', default='x265', help='Video encoder to use')
+    parser.add_argument('--dearrow', default=True, action=argparse.BooleanOptionalAction, help='Whether to attempt to replace the original titles with crowdsourced titles')
     parser.add_argument("urls", nargs='*', help="yt-dlp compatible URLs or identifiers")
     args = parser.parse_args()
     main(args.urls, args.codec, args.dearrow)
