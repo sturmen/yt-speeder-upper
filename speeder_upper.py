@@ -288,6 +288,7 @@ def fetch_dearrowed_title(video_id):
 
 
 def fetch_sponsored_bits(video_id):
+    """ Query the SponsorBlock service to find out if any segments should be omitted."""
     categories_string = str(BLOCKED_CATEGORIES).replace("'", '"')
     payload = f"videoID={video_id}&categories={categories_string}"
     r = requests.get(
@@ -326,6 +327,7 @@ def add_sponsor_video_filter(video_stream, audio_stream, video_id, total_duratio
 
 
 def trim_video(video_stream, segments_to_keep):
+    """ Construct the video filter that slices out the undesired segments. """
     streams_to_concat = []
     split_streams = video_stream.filter_multi_output("split", len(segments_to_keep))
     for i, segment in enumerate(segments_to_keep):
@@ -342,6 +344,7 @@ def trim_video(video_stream, segments_to_keep):
 
 
 def trim_audio(audio_stream, segments_to_keep):
+    """ Construct the audio filter that slices out the undesired segments. """
     streams_to_concat = []
     split_streams = audio_stream.filter_multi_output("asplit", len(segments_to_keep))
     for i, segment in enumerate(segments_to_keep):
@@ -361,6 +364,7 @@ def trim_audio(audio_stream, segments_to_keep):
 
 
 def find_worthwhile_clips(segments, total_duration):
+    """ Parse the SponsorBlock info to get only the desired segments. """
     output = []
     start = 0.0
     for unwanted_segment in sorted([x["segment"] for x in segments]):
@@ -376,6 +380,7 @@ def find_worthwhile_clips(segments, total_duration):
 
 
 def encode_videos(downloaded_videos, codec_label):
+    """ Iterate through the videos and invoke ffmpeg to encode them. """
     existing_mkv_files = glob.glob("*.mkv")
 
     for display_id, file_name_root in downloaded_videos:
@@ -385,19 +390,19 @@ def encode_videos(downloaded_videos, codec_label):
         out_file_suffix = f"_{display_id}.mp4"
         existing_file = next(glob.iglob("*" + out_file_suffix), None)
         if existing_file:
-            print("%s already exists, skipping" % existing_file)
+            print(f"{existing_file} already exists, skipping")
             continue
 
         destination_file = file_name_root + out_file_suffix
 
         new_height = get_height(in_file_name)
 
-        inputObject = ffmpeg.input("./" + in_file_name)
+        input_object = ffmpeg.input("./" + in_file_name)
 
         total_length = get_total_duration(in_file_name)
 
-        v1 = inputObject["v"]
-        a1 = inputObject["a"]
+        v1 = input_object["v"]
+        a1 = input_object["a"]
         v1, a1 = add_sponsor_video_filter(v1, a1, display_id, total_length)
         v1 = v1.setpts("PTS/%s" % SPEED_FACTOR)
         if new_height > MAX_HEIGHT:
@@ -444,9 +449,11 @@ def encode_videos(downloaded_videos, codec_label):
     for outdated_file in existing_mkv_files:
         os.remove(outdated_file)
 
+    for leftover_tmp_file in glob.glob("*.tmp"):
+        os.remove(leftover_tmp_file)
 
 def main(urls, codec, dearrow_enabled):
-    
+    """ The glue that downloads the files then encodes them. """
     if codec not in CODECS:
         print(f"Invalid codec {codec} specified. Must be one of:")
         for valid_codec in CODECS:
