@@ -8,12 +8,11 @@ import os
 import re
 import glob
 from datetime import datetime
+from pathlib import Path
+from filelock import Timeout, FileLock
 import yt_dlp
 import requests
 import ffmpeg
-
-from filelock import Timeout, FileLock
-from pathlib import Path
 
 MAX_RETRIES = 5
 MAX_HEIGHT = 1328
@@ -401,7 +400,7 @@ def encode_videos(downloaded_videos, codec_label):
         v1 = v1.setpts("PTS/%s" % SPEED_FACTOR)
         if new_height > MAX_HEIGHT:
             v1 = v1.filter(
-                "scale", MAX_WIDTH, MAX_HEIGHT, force_original_aspect_ratio="decrease"
+                "scale", MAX_WIDTH, MAX_HEIGHT, force_original_aspect_ratio="decrease", force_divisible_by=2
             )
         a1 = a1.filter("atempo", SPEED_FACTOR)
 
