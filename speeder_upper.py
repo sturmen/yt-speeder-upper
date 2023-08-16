@@ -242,7 +242,7 @@ def download_videos(videos, opts, dearrow_enabled, retries_remaining):
                 print(
                     f"failed to download {url}\nretries left: {retries_remaining - 1}"
                 )
-                return download_videos(videos, opts, retries_remaining - 1)
+                return download_videos(videos, opts, dearrow_enabled, retries_remaining - 1)
 
     return result_list
 
