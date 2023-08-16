@@ -238,7 +238,8 @@ def download_videos(videos, opts, dearrow_enabled, retries_remaining):
                 print("keyboard interrupt, aborting")
                 print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 exit()
-            except:
+            except Exception as e:
+                print(e)
                 print(
                     f"failed to download {url}\nretries left: {retries_remaining - 1}"
                 )
@@ -264,37 +265,46 @@ def parse_video_info_for_filename(entry, dearrow_enabled):
 def fetch_dearrowed_title(video_id):
     """Fetches a new title from DeArrow that is potentially less  clickbait-y"""
     payload = f"videoID={video_id}"
-    r = requests.get(
-        "https://sponsor.ajay.app/api/branding", params=payload, timeout=10
-    )
-    data = json.loads(r.text)
+    try:
+        r = requests.get(
+            "https://sponsor.ajay.app/api/branding", params=payload, timeout=10
+        )
+        
+        data = json.loads(r.text)
 
-    # Initialize max_votes to -1 and most_voted_title to None
-    max_votes = -1
-    most_voted_title = None
+        # Initialize max_votes to -1 and most_voted_title to None
+        max_votes = -1
+        most_voted_title = None
 
-    # Iterate over all titles in the data
-    for item in data["titles"]:
-        # Check if current title has more votes than max_votes
-        if item["votes"] > max_votes:
-            # If so, update max_votes and most_voted_title
-            max_votes = item["votes"]
-            most_voted_title = item["title"]
+        # Iterate over all titles in the data
+        for item in data["titles"]:
+            # Check if current title has more votes than max_votes
+            if item["votes"] > max_votes:
+                # If so, update max_votes and most_voted_title
+                max_votes = item["votes"]
+                most_voted_title = item["title"]
 
-    if most_voted_title is None:
-        print(f"No DeArrow title found for {video_id}")
-    return most_voted_title
+        if most_voted_title is None:
+            print(f"No DeArrow title found for {video_id}")
+        return most_voted_title
+    except requests.exceptions.ReadTimeout as timeout_error:
+        print(timeout_error)
+        return None
 
 
 def fetch_sponsored_bits(video_id):
     """ Query the SponsorBlock service to find out if any segments should be omitted."""
     categories_string = str(BLOCKED_CATEGORIES).replace("'", '"')
     payload = f"videoID={video_id}&categories={categories_string}"
-    r = requests.get(
-        "https://sponsor.ajay.app/api/skipSegments", params=payload, timeout=10
-    )
-    output = r.text
-    return output
+    try:
+        r = requests.get(
+            "https://sponsor.ajay.app/api/skipSegments", params=payload, timeout=10
+        )
+        output = r.text
+        return output
+    except requests.exceptions.ReadTimeout as timeout_error:
+        print(timeout_error)
+        return "Not Found"
 
 
 def add_sponsor_video_filter(video_stream, audio_stream, video_id, total_duration):
