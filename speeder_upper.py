@@ -229,7 +229,7 @@ def download_videos(videos, opts, dearrow_enabled, retries_remaining):
                     and "entries" in extracted_info
                     and extracted_info["_type"] == "playlist"
                 ):
-                    for entry in extracted_info["entries"]:
+                    for entry in [x for x in extracted_info["entries"] if x is not None]:
                         result_list.append(parse_video_info_for_filename(entry, dearrow_enabled))
                 else:
                     result_list.append(parse_video_info_for_filename(extracted_info, dearrow_enabled))
@@ -238,8 +238,8 @@ def download_videos(videos, opts, dearrow_enabled, retries_remaining):
                 print("keyboard interrupt, aborting")
                 print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 exit()
-            except Exception as e:
-                print(e)
+            except Exception as exception_during_download:
+                print(exception_during_download)
                 print(
                     f"failed to download {url}\nretries left: {retries_remaining - 1}"
                 )
@@ -474,6 +474,7 @@ def main(urls, codec, dearrow_enabled):
         "outtmpl": FILE_NAME_TEMPLATE,
         "restrictfilenames": True,
         "merge_output_format": "mkv",
+        "ignoreerrors": True,
     }
 
     downloaded_videos = []
