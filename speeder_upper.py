@@ -391,6 +391,7 @@ def find_worthwhile_clips(segments, total_duration):
 def encode_videos(downloaded_videos, codec_label):
     """ Iterate through the videos and invoke ffmpeg to encode them. """
     existing_mkv_files = glob.glob("*.mkv")
+    existing_mp4_files = glob.glob("*.mp4")
 
     for display_id, file_name_root in downloaded_videos:
         in_file_name = display_id + ".mkv"
@@ -400,6 +401,7 @@ def encode_videos(downloaded_videos, codec_label):
         existing_file = next(glob.iglob("*" + out_file_suffix), None)
         if existing_file:
             print(f"{existing_file} already exists, skipping")
+            existing_mp4_files.remove(existing_file)
             continue
 
         destination_file = file_name_root + out_file_suffix
@@ -455,7 +457,7 @@ def encode_videos(downloaded_videos, codec_label):
             Path(f'ERROR_ENCODING_FILE{out_file_suffix}').touch()
             continue
 
-    for outdated_file in existing_mkv_files:
+    for outdated_file in existing_mkv_files + existing_mp4_files:
         os.remove(outdated_file)
 
     for leftover_tmp_file in glob.glob("*.tmp"):
