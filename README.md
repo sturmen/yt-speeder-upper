@@ -6,4 +6,9 @@ A Python script to download & re-encode videos to be faster
 
 Requires Python 3, and `ffmpeg` and `ffprobe` in your PATH.
 
-`pipenv run python3 speeder_upper.py --codec x265 "https://www.youtube.com/watch?v=0EqSXDwTq6U"`
+`pipenv run python3 speeder_upper.py --codec x265 --dearrow "https://www.youtube.com/watch?v=0EqSXDwTq6U"`
+
+
+# Roadmap
+
+- Loudness normalization for quiet videos using [ffmpeg-normalize](https://github.com/slhck/ffmpeg-normalize#api)
