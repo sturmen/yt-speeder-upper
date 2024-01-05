@@ -433,7 +433,7 @@ def encode_videos(downloaded_videos, codec_label):
         )
         try:
             codec = CODECS[codec_label]
-            out, err = codec(v1, a1, temp_file_name, output_framerate).global_args("-hide_banner").run(overwrite_output=True)
+            out, err = codec(v1, a1, temp_file_name, output_framerate).global_args("-hide_banner", "-nostdin").run(overwrite_output=True)
             print(f"Output: {out}")
             print(f"Error: {err}")
             end = datetime.now()
