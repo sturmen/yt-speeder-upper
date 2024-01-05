@@ -31,8 +31,9 @@ download_lock = FileLock(DOWNLOAD_LOCK_PATH, timeout=1)
 ENCODE_LOCK_PATH = "ytdl_encode.lock"
 encode_lock = FileLock(ENCODE_LOCK_PATH, timeout=1)
 
+
 def codec_hevc_nvenc(v1, a1, tmp_file, framerate):
-    """ Use an NVIDIA GPU to encode to H.265 """
+    """Use an NVIDIA GPU to encode to H.265"""
     return ffmpeg.output(
         v1,
         a1,
@@ -54,22 +55,24 @@ def codec_hevc_nvenc(v1, a1, tmp_file, framerate):
         r=framerate,
         **{
             "metadata:s:a:0": "language=eng",
-        })
+        },
+    )
+
 
 def codec_hevc_qsv(v1, a1, tmp_file, framerate):
-    """ Use an Intel CPU/GPU to encode to H.265 """
+    """Use an Intel CPU/GPU to encode to H.265"""
     return ffmpeg.output(
         v1,
         a1,
         tmp_file,
         format="mp4",
-        pix_fmt='p010le',
-        vcodec='hevc_qsv',
-        preset='slower',
+        pix_fmt="p010le",
+        vcodec="hevc_qsv",
+        preset="slower",
         global_quality="19",
         g="600",
         forced_idr="1",
-        vprofile='main10',
+        vprofile="main10",
         vtag="hvc1",
         acodec="libfdk_aac",
         audio_bitrate="128k",
@@ -77,33 +80,37 @@ def codec_hevc_qsv(v1, a1, tmp_file, framerate):
         r=framerate,
         **{
             "metadata:s:a:0": "language=eng",
-        })
+        },
+    )
+
 
 def codec_av1_nvenc(v1, a1, tmp_file, framerate):
-    """ Use an NVIDIA GPU to encode to AV1 """
+    """Use an NVIDIA GPU to encode to AV1"""
     return ffmpeg.output(
         v1,
         a1,
         tmp_file,
-        format='mp4',
-        pix_fmt='p010le',
-        vcodec='av1_nvenc',
-        multipass='qres',
-        video_bitrate='0',
-        preset='slow',
+        format="mp4",
+        pix_fmt="p010le",
+        vcodec="av1_nvenc",
+        multipass="qres",
+        video_bitrate="0",
+        preset="slow",
         cq="28",
-        vprofile='main10',
-        rc='vbr',
+        vprofile="main10",
+        rc="vbr",
         acodec="libfdk_aac",
         audio_bitrate="128k",
         movflags="+faststart",
         r=framerate,
         **{
             "metadata:s:a:0": "language=eng",
-        })
+        },
+    )
+
 
 def codec_x264(v1, a1, tmp_file, framerate):
-    """ Use CPU encoding to encode to H.264 """
+    """Use CPU encoding to encode to H.264"""
     return ffmpeg.output(
         v1,
         a1,
@@ -121,21 +128,23 @@ def codec_x264(v1, a1, tmp_file, framerate):
         r=framerate,
         **{
             "metadata:s:a:0": "language=eng",
-        })
+        },
+    )
+
 
 def codec_x265(v1, a1, tmp_file, framerate):
-    """ Use CPU encoding to encode to H.265 """
+    """Use CPU encoding to encode to H.265"""
     return ffmpeg.output(
         v1,
         a1,
         tmp_file,
         format="mp4",
         pix_fmt="yuv420p10le",
-        vcodec='libx265',
-        preset='medium',
+        vcodec="libx265",
+        preset="medium",
         crf="22",
         g="600",
-        vprofile='main10',
+        vprofile="main10",
         vtag="hvc1",
         acodec="libfdk_aac",
         audio_bitrate="128k",
@@ -143,17 +152,19 @@ def codec_x265(v1, a1, tmp_file, framerate):
         r=framerate,
         **{
             "metadata:s:a:0": "language=eng",
-        })
+        },
+    )
+
 
 def codec_av1(v1, a1, tmp_file, framerate):
-    """ Use CPU encoding to encode to AV1 """
+    """Use CPU encoding to encode to AV1"""
     return ffmpeg.output(
         v1,
         a1,
         tmp_file,
-        format='mp4',
-        pix_fmt='yuv420p10le',
-        vcodec='libsvtav1',
+        format="mp4",
+        pix_fmt="yuv420p10le",
+        vcodec="libsvtav1",
         preset=6,
         crf=34,
         acodec="libfdk_aac",
@@ -162,11 +173,20 @@ def codec_av1(v1, a1, tmp_file, framerate):
         r=framerate,
         **{
             "metadata:s:a:0": "language=eng",
-            'svtav1-params': 'fast-decode=1:enable-overlays=1:lookahead=0:scd=1:tune=1',
-        })
+            "svtav1-params": "fast-decode=1:enable-overlays=1:lookahead=0:scd=1:tune=1",
+        },
+    )
 
 
-CODECS ={"x264": codec_x264, "x265": codec_x265, "av1": codec_av1, "hevc_nvenc":codec_hevc_nvenc, "av1_nvenc": codec_av1_nvenc, "hevc_qsv": codec_hevc_qsv}
+CODECS = {
+    "x264": codec_x264,
+    "x265": codec_x265,
+    "av1": codec_av1,
+    "hevc_nvenc": codec_hevc_nvenc,
+    "av1_nvenc": codec_av1_nvenc,
+    "hevc_qsv": codec_hevc_qsv,
+}
+
 
 def get_height(filename):
     """Calculate the height of the video"""
@@ -229,10 +249,16 @@ def download_videos(videos, opts, dearrow_enabled, retries_remaining):
                     and "entries" in extracted_info
                     and extracted_info["_type"] == "playlist"
                 ):
-                    for entry in [x for x in extracted_info["entries"] if x is not None]:
-                        result_list.append(parse_video_info_for_filename(entry, dearrow_enabled))
+                    for entry in [
+                        x for x in extracted_info["entries"] if x is not None
+                    ]:
+                        result_list.append(
+                            parse_video_info_for_filename(entry, dearrow_enabled)
+                        )
                 else:
-                    result_list.append(parse_video_info_for_filename(extracted_info, dearrow_enabled))
+                    result_list.append(
+                        parse_video_info_for_filename(extracted_info, dearrow_enabled)
+                    )
             except KeyboardInterrupt:
                 print("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 print("keyboard interrupt, aborting")
@@ -243,7 +269,9 @@ def download_videos(videos, opts, dearrow_enabled, retries_remaining):
                 print(
                     f"failed to download {url}\nretries left: {retries_remaining - 1}"
                 )
-                return download_videos(videos, opts, dearrow_enabled, retries_remaining - 1)
+                return download_videos(
+                    videos, opts, dearrow_enabled, retries_remaining - 1
+                )
 
     return result_list
 
@@ -269,7 +297,7 @@ def fetch_dearrowed_title(video_id):
         r = requests.get(
             "https://sponsor.ajay.app/api/branding", params=payload, timeout=10
         )
-        
+
         data = json.loads(r.text)
 
         # Initialize max_votes to -1 and most_voted_title to None
@@ -293,7 +321,7 @@ def fetch_dearrowed_title(video_id):
 
 
 def fetch_sponsored_bits(video_id):
-    """ Query the SponsorBlock service to find out if any segments should be omitted."""
+    """Query the SponsorBlock service to find out if any segments should be omitted."""
     categories_string = str(BLOCKED_CATEGORIES).replace("'", '"')
     payload = f"videoID={video_id}&categories={categories_string}"
     try:
@@ -336,7 +364,7 @@ def add_sponsor_video_filter(video_stream, audio_stream, video_id, total_duratio
 
 
 def trim_video(video_stream, segments_to_keep):
-    """ Construct the video filter that slices out the undesired segments. """
+    """Construct the video filter that slices out the undesired segments."""
     streams_to_concat = []
     split_streams = video_stream.filter_multi_output("split", len(segments_to_keep))
     for i, segment in enumerate(segments_to_keep):
@@ -353,7 +381,7 @@ def trim_video(video_stream, segments_to_keep):
 
 
 def trim_audio(audio_stream, segments_to_keep):
-    """ Construct the audio filter that slices out the undesired segments. """
+    """Construct the audio filter that slices out the undesired segments."""
     streams_to_concat = []
     split_streams = audio_stream.filter_multi_output("asplit", len(segments_to_keep))
     for i, segment in enumerate(segments_to_keep):
@@ -373,7 +401,7 @@ def trim_audio(audio_stream, segments_to_keep):
 
 
 def find_worthwhile_clips(segments, total_duration):
-    """ Parse the SponsorBlock info to get only the desired segments. """
+    """Parse the SponsorBlock info to get only the desired segments."""
     output = []
     start = 0.0
     for unwanted_segment in sorted([x["segment"] for x in segments]):
@@ -389,7 +417,7 @@ def find_worthwhile_clips(segments, total_duration):
 
 
 def encode_videos(downloaded_videos, codec_label):
-    """ Iterate through the videos and invoke ffmpeg to encode them. """
+    """Iterate through the videos and invoke ffmpeg to encode them."""
     existing_mkv_files = glob.glob("*.mkv")
     existing_mp4_files = glob.glob("*.mp4")
 
@@ -418,7 +446,11 @@ def encode_videos(downloaded_videos, codec_label):
         v1 = v1.setpts("PTS/%s" % SPEED_FACTOR)
         if new_height > MAX_HEIGHT:
             v1 = v1.filter(
-                "scale", MAX_WIDTH, MAX_HEIGHT, force_original_aspect_ratio="decrease", force_divisible_by=2
+                "scale",
+                MAX_WIDTH,
+                MAX_HEIGHT,
+                force_original_aspect_ratio="decrease",
+                force_divisible_by=2,
             )
         a1 = a1.filter("atempo", SPEED_FACTOR)
 
@@ -433,7 +465,11 @@ def encode_videos(downloaded_videos, codec_label):
         )
         try:
             codec = CODECS[codec_label]
-            out, err = codec(v1, a1, temp_file_name, output_framerate).global_args("-hide_banner", "-nostdin").run(overwrite_output=True)
+            out, err = (
+                codec(v1, a1, temp_file_name, output_framerate)
+                .global_args("-hide_banner", "-nostdin")
+                .run(overwrite_output=True)
+            )
             print(f"Output: {out}")
             print(f"Error: {err}")
             end = datetime.now()
@@ -454,7 +490,7 @@ def encode_videos(downloaded_videos, codec_label):
         except ffmpeg._run.Error:
             print(f"Error running ffmpeg on {out_file_suffix}!")
             os.remove(temp_file_name)
-            Path(f'ERROR_ENCODING_FILE{out_file_suffix}').touch()
+            Path(f"ERROR_ENCODING_FILE{out_file_suffix}").touch()
             continue
 
     for outdated_file in existing_mkv_files + existing_mp4_files:
@@ -463,8 +499,9 @@ def encode_videos(downloaded_videos, codec_label):
     for leftover_tmp_file in glob.glob("*.tmp"):
         os.remove(leftover_tmp_file)
 
+
 def main(urls, codec, dearrow_enabled):
-    """ The glue that downloads the files then encodes them. """
+    """The glue that downloads the files then encodes them."""
     if codec not in CODECS:
         print(f"Invalid codec {codec} specified. Must be one of:")
         for valid_codec in CODECS:
@@ -484,7 +521,9 @@ def main(urls, codec, dearrow_enabled):
     try:
         with download_lock:
             print(f"{timestamp} Got download lock.")
-            downloaded_videos = download_videos(urls, ydl_opts, dearrow_enabled, MAX_RETRIES)
+            downloaded_videos = download_videos(
+                urls, ydl_opts, dearrow_enabled, MAX_RETRIES
+            )
     except Timeout:
         print(f"{timestamp} Could not get downloading lock. Exiting early.")
         sys.exit()
@@ -501,8 +540,13 @@ def main(urls, codec, dearrow_enabled):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--codec', default='x265', help='Video encoder to use')
-    parser.add_argument('--dearrow', default=True, action=argparse.BooleanOptionalAction, help='Whether to attempt to replace the original titles with crowdsourced titles')
-    parser.add_argument("urls", nargs='*', help="yt-dlp compatible URLs or identifiers")
+    parser.add_argument("--codec", default="x265", help="Video encoder to use")
+    parser.add_argument(
+        "--dearrow",
+        default=True,
+        action=argparse.BooleanOptionalAction,
+        help="Whether to attempt to replace the original titles with crowdsourced titles",
+    )
+    parser.add_argument("urls", nargs="*", help="yt-dlp compatible URLs or identifiers")
     args = parser.parse_args()
     main(args.urls, args.codec, args.dearrow)
