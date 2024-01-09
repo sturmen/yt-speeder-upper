@@ -173,7 +173,7 @@ def codec_av1(v1, a1, tmp_file, framerate):
         r=framerate,
         **{
             "metadata:s:a:0": "language=eng",
-            "svtav1-params": "fast-decode=1:enable-overlays=1:lookahead=0:scd=1:tune=1",
+            "svtav1-params": "fast-decode=1:enable-overlays=1:lookahead=0:scd=1:enable-qm=1",
         },
     )
 
