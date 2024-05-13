@@ -474,7 +474,7 @@ def encode_videos(downloaded_videos, codec_label):
             duration = end - start
             if os.path.isfile(temp_file_name):
                 print(
-                    "%s encoding %s completed in %s"
+                    "%s completed %s encoding in %s"
                     % (end.strftime("[%Y-%m-%d %H:%M:%S]"), file_name_root, duration)
                 )
                 os.rename(temp_file_name, destination_file)
