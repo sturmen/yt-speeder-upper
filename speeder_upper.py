@@ -186,7 +186,7 @@ CODECS = {
 }
 
 
-def get_height(filename):
+def get_height_and_width(filename):
     """Calculate the height of the video"""
     try:
         probe = ffmpeg.probe("./" + filename)
@@ -195,7 +195,8 @@ def get_height(filename):
             None,
         )
         height = int(video_stream["height"])
-        return height
+        width = int(video_stream["width"])
+        return height, width
     except ffmpeg.Error as err:
         print(err.stderr)
         raise err
@@ -432,7 +433,7 @@ def encode_videos(downloaded_videos, codec_label):
 
         destination_file = file_name_root + out_file_suffix
 
-        new_height = get_height(in_file_name)
+        new_height, new_width = get_height_and_width(in_file_name)
 
         input_object = ffmpeg.input("./" + in_file_name)
 
@@ -442,7 +443,7 @@ def encode_videos(downloaded_videos, codec_label):
         a1 = input_object["a"]
         v1, a1 = add_sponsor_video_filter(v1, a1, display_id, total_length)
         v1 = v1.setpts("PTS/%s" % SPEED_FACTOR)
-        if new_height > MAX_HEIGHT:
+        if new_height > MAX_HEIGHT or new_width > MAX_WIDTH:
             v1 = v1.filter(
                 "scale",
                 MAX_WIDTH,
