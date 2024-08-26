@@ -15,8 +15,8 @@ import requests
 import ffmpeg
 
 MAX_RETRIES = 5
-MAX_HEIGHT = 2064
-MAX_WIDTH = 2752
+MAX_HEIGHT = 1080
+MAX_WIDTH = 1920
 MAX_INPUT_FRAME_RATE = 60
 MAX_OUTPUT_FRAME_RATE = 60
 FILE_NAME_TEMPLATE = "%(id)s"
@@ -143,6 +143,8 @@ def codec_x265(v1, a1, tmp_file, framerate):
         preset="medium",
         crf="18",
         g="600",
+        bufsize="25M",
+        maxrate="10M",
         vprofile="main10",
         vtag="hvc1",
         acodec="libfdk_aac",
