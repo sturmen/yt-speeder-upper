@@ -53,6 +53,7 @@ def codec_hevc_nvenc(v1, a1, tmp_file, framerate):
         r=framerate,
         **{
             "metadata:s:a:0": "language=eng",
+            "filter:a": "dynaudnorm",
         },
     )
 
@@ -78,6 +79,7 @@ def codec_hevc_qsv(v1, a1, tmp_file, framerate):
         r=framerate,
         **{
             "metadata:s:a:0": "language=eng",
+            "filter:a": "dynaudnorm",
         },
     )
 
@@ -103,6 +105,7 @@ def codec_av1_nvenc(v1, a1, tmp_file, framerate):
         r=framerate,
         **{
             "metadata:s:a:0": "language=eng",
+            "filter:a": "dynaudnorm",
         },
     )
 
@@ -126,6 +129,7 @@ def codec_x264(v1, a1, tmp_file, framerate):
         r=framerate,
         **{
             "metadata:s:a:0": "language=eng",
+            "filter:a": "dynaudnorm",
         },
     )
 
@@ -153,6 +157,7 @@ def codec_x265(v1, a1, tmp_file, framerate):
         r=framerate,
         **{
             "metadata:s:a:0": "language=eng",
+            "filter:a": "dynaudnorm",
         },
     )
 
@@ -175,6 +180,7 @@ def codec_av1(v1, a1, tmp_file, framerate):
         **{
             "metadata:s:a:0": "language=eng",
             "svtav1-params": "fast-decode=1:enable-overlays=1:lookahead=0:scd=1:enable-qm=1",
+            "filter:a": "dynaudnorm",
         },
     )
 
