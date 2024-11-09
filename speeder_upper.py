@@ -178,6 +178,27 @@ def codec_av1(v1, a1, tmp_file, framerate):
         },
     )
 
+def codec_hevc_mac(v1, a1, tmp_file, framerate):
+    """Use VideoToolbox encoding to encode to H.265"""
+    return ffmpeg.output(
+        v1,
+        a1,
+        tmp_file,
+        format="mp4",
+        pix_fmt="p010le",
+        vcodec="hevc_videotoolbox",
+        vprofile="main10",
+        vtag="hvc1",
+        acodec="aac_at",
+        audio_bitrate="128k",
+        movflags="+faststart",
+        r=framerate,
+        **{
+            "q:v": "70",
+            "metadata:s:a:0": "language=eng",
+        },
+    )
+
 
 CODECS = {
     "x264": codec_x264,
@@ -186,6 +207,7 @@ CODECS = {
     "hevc_nvenc": codec_hevc_nvenc,
     "av1_nvenc": codec_av1_nvenc,
     "hevc_qsv": codec_hevc_qsv,
+    "hevc_mac": codec_hevc_mac,
 }
 
 
