@@ -310,6 +310,7 @@ def parse_video_info_for_filename(entry, dearrow_enabled):
             video_title = dearrow_title
     uploader = entry["uploader"]
     filename = allowed_chars_pattern.sub("", f"{uploader} - {video_title}")
+    filename = ' '.join(filename.split())
     print(f'Setting "{filename}" as file name for {video_id}')
     return video_id, filename
 
